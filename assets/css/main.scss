@@ -1,0 +1,208 @@
+@import 'primeicons/primeicons.css';
+@import "swiper/swiper-bundle.css";
+
+
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    margin: 0;
+    padding: 0;
+    background-color: #191b24;
+    color: #fff
+}
+
+h2 {
+    margin: 0px !important;
+}
+
+i,
+.p-menu-item-icon,
+.p-menu-item-label,
+.p-menubar-item-icon,
+.p-menubar-item-label,
+.p-inputtext::placeholder {
+    color: #fff;
+}
+
+.p-menu-item-icon,
+.p-menu-item-label {
+    font-size: 13px;
+}
+
+.p-menu-item {
+    padding: 4px 0px;
+}
+
+.p-menubar-item:active,
+.p-menu-item:hover,
+.p-menu-item-content:hover {
+    background: #ffffff05 !important;
+}
+
+.p-menubar-submenu,
+.p-menubar-item-active>.p-menubar-item-content,
+.p-menubar-item-content:focus,
+.p-menubar-item-content:target,
+.p-menubar-item-content:hover {
+    background: #22242c !important;
+    color: #e6ac06 !important;
+}
+
+.p-menubar-root-list {
+    z-index: 9999;
+}
+
+.p-menubar-submenu:hover,
+.p-menubar-submenu {
+    margin-top: 10px !important;
+    background: #191b24 !important;
+    color: #e6ac06 !important;
+    border: none !important
+}
+
+.p-menu-item-icon,
+.p-menu-item-label,
+.p-button-label {
+    font-weight: 700 !important;
+}
+
+.p-button:hover {
+    opacity: 0.8 !important;
+}
+
+.p-password {
+    padding: 0px !important;
+    height: 44px !important;
+}
+
+.p-tabpanels,
+.p-tablist-tab-list {
+    background-color: #191b24 !important;
+    color: #ffffff !important;
+}
+
+.p-tab {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+}
+
+.p-tabs {
+    width: 1080px;
+}
+
+.p-autocomplete-input {
+    width: 368px;
+    height: 2.8rem;
+    border-radius: 0.4rem;
+    outline: none !important;
+    box-shadow: none !important;
+    padding: 0.4rem 3rem;
+    line-height: 2rem;
+    color: #fff !important;
+    background: #22242c !important;
+    border: 1px solid #444;
+    padding: 0px 40px !important;
+}
+
+.p-inputicon {
+    z-index: 100;
+    top: 47%;
+}
+
+.p-autocomplete-option,
+.p-autocomplete-overlay {
+    background-color: rgba(15, 17, 26, .95) !important;
+    border: none !important;
+    color: #ffffff !important;
+}
+
+.p-autocomplete-list-container::-webkit-scrollbar {
+    width: 6px;
+    background-color: #aaa !important;
+}
+
+.p-autocomplete-list-container::-webkit-scrollbar-thumb {
+    border-radius: 20px !important;
+    background: rgba(15, 17, 26, .95) !important;
+}
+
+.p-autocomplete-option:hover {
+    background: #ffffff05 !important;
+    border-inline-start: 1px solid #aaa !important;
+}
+
+.p-divider {
+    margin: 0px 8px !important;
+}
+
+.p-divider-horizontal:before {
+    border-block-start: 1px solid #272932 !important;
+}
+
+.p-divider-vertical:before {
+    border-inline-start: 1px solid #aaa !important;
+}
+
+.p-fieldset-legend,
+.p-fieldset {
+    background: #191b24 !important;
+}
+
+.p-fieldset {
+    border-color: #ffffff10 !important;
+}
+
+.p-fieldset-legend-label {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.p-scrollpanel-bar-y::-webkit-scrollbar-thumb {
+    border-radius: 20px !important;
+    background: rgba(15, 17, 26, .95) !important;
+}
+
+.p-avatar img {
+    object-fit: cover;
+}
+
+.p-progressbar {
+    height: 12px;
+    width: 440px;
+    border-radius: 6px!important;
+    background: rgba(255, 255, 255, 0.8)!important;
+    box-shadow: 0px 0px 10px rgba(0, 183, 255, 0.5)!important;
+    position: relative!important;
+}
+
+.p-progressbar-value {
+    background: linear-gradient(90deg, #00ccff, #0099ff, #0066ff)!important;
+    border-radius: 6px!important;
+    transition: width 0.5s ease-in-out!important;
+    position: relative!important;
+}
+
+.p-progressbar-value::after {
+    content: "";
+    position: absolute;
+    right: -4px;
+    top: -4px;
+    width: 30px;
+    height: 30px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%230044cc' stroke='%23ffffff' stroke-width='5'/%3E%3Ccircle cx='30' cy='30' r='5' fill='%23ffffff'/%3E%3Ccircle cx='70' cy='30' r='5' fill='%23ffffff'/%3E%3Ccircle cx='30' cy='70' r='5' fill='%23ffffff'/%3E%3Ccircle cx='70' cy='70' r='5' fill='%23ffffff'/%3E%3Ccircle cx='50' cy='50' r='10' fill='%23ffffff'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 50%;
+    z-index: 2;
+    animation: spinReel 2s infinite linear; 
+}
+
+.p-progressbar-label {
+    display: none !important;
+}
+
+@keyframes spinReel {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
