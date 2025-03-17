@@ -99,7 +99,7 @@ const submitComment = (comment: string) => {
   mutate(
     {
       movieId: Number(movieId.value),
-      userId: Number(profile.user?.user_id),
+      profileId: Number(profile.user?.id),
       isApproved: 1,
       content: comment,
     },

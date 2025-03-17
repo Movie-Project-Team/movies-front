@@ -206,3 +206,9 @@ i,
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+.p-popover,
+.p-popover-content {
+    background-color: #1a1c24!important;
+    border: 1px solid #1a1c24!important;
+}

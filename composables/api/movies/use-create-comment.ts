@@ -5,7 +5,7 @@ import { useLoadingStore } from "~/stores/loading";
 const ENDPOINT = '/comment/create';
 
 interface RegisterPayload {
-  userId: number;
+  profileId: number;
   movieId: number | null;
   parentId?: number | null;
   isApproved: number;

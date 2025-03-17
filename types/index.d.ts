@@ -168,3 +168,18 @@ type CommentListResponse = {
   message: string,
   data: CommentResponse[],
 }
+
+type NotificationItem = {
+  id: number,
+  type: number,
+  title: string,
+  message: string,
+  link?: string,
+  time: string
+};
+
+type NotificationResponse = {
+  code: number,
+  message: string,
+  data: NotificationItem[],
+}

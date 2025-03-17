@@ -55,7 +55,7 @@ const { mutate } = useComment();
 const submitComment = (comment: string) => {
   mutate(
     {
-      userId: Number(profile.user?.user_id),
+      profileId: Number(profile.user?.id),
       movieId: movieId.selectedMovieId,
       parentId: selectedCommentId.value || null,
       isApproved: 1,
@@ -77,10 +77,11 @@ const submitComment = (comment: string) => {
 </script>
 
 <template>
-  <Flex gap="20px" direction="column">
+  <Flex gap="10px" direction="column">
     <Flex gap="12px" justify="flex-start">
       <Box>
-        <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" class="mr-2" size="large" shape="circle" />
+        <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" class="mr-2" size="large"
+          shape="circle" />
       </Box>
       <Flex direction="column" gap="10px" :style="{ fontSize: '14px' }">
         <Flex align="center" gap="12px">
@@ -88,7 +89,9 @@ const submitComment = (comment: string) => {
           <span :style="{ color: '#aaa', opacity: '.5', fontSize: '12px' }">{{ time }}</span>
         </Flex>
         <Flex gap="6px" align="center">
-          <span v-if="isReply" :style="{ padding: '.2rem .3rem', backgroundColor: '#3e435c', borderRadius: '.2rem' }">@{{ repliedTo }} </span>
+          <span v-if="isReply"
+            :style="{ padding: '.2rem .3rem', backgroundColor: '#3e435c', borderRadius: '.2rem' }">@{{ repliedTo }}
+          </span>
           {{ comment }}
         </Flex>
         <Flex gap="16px" :style="{ fontSize: '12px' }">
@@ -99,17 +102,10 @@ const submitComment = (comment: string) => {
             <span>Trả lời</span>
           </Flex>
         </Flex>
-        <Flex 
-          v-if="level === 1 && replies && replies.length" 
-          align="center"
-          gap="6px"
+        <Flex v-if="level === 1 && replies && replies.length" align="center" gap="6px"
           @click="showReplies = !showReplies"
-          :style="{ cursor: 'pointer', color: '#aaa', fontSize: '12px', marginTop: '6px' }"
-        >
-          <i 
-            :class="showReplies ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" 
-            style="font-size: 14px"
-          ></i>
+          :style="{ cursor: 'pointer', color: '#aaa', fontSize: '12px', marginTop: '6px' }">
+          <i :class="showReplies ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" style="font-size: 14px"></i>
           <span>{{ showReplies ? 'Ẩn bình luận' : `${totalReplies} bình luận` }}</span>
         </Flex>
       </Flex>
@@ -117,31 +113,18 @@ const submitComment = (comment: string) => {
 
     <!-- Hiển thị CommentInput khi nhấn vào nút "Trả lời" -->
     <div class="comment-wrapper">
-      <CommentInput v-if="replyingState[id]" @close="replyingState[id] = false" @submitComment="submitComment"/>
+      <CommentInput v-if="replyingState[id]" @close="replyingState[id] = false" @submitComment="submitComment" />
       <div v-if="!profile.user && replyingState[id]" class="comment-overlay">
         <p>Đăng nhập để bình luận</p>
       </div>
     </div>
 
     <!-- Hiển thị danh sách replies khi showReplies = true -->
-    <Flex 
-      v-if="(level > 1) || showReplies" 
-      direction="column" 
-      gap="8px"
-      :style="{ marginLeft: level === 1 ? '48px' : '0px' }" 
-    >
-      <CommentBox 
-        v-for="reply in replies" 
-        :key="reply.id"
-        :id="reply.id"
-        :name="reply.user.name"
-        :time="reply.created_at" 
-        :repliedTo="reply.parent.user.name"
-        :comment="reply.content"
-        :replies="reply.replies"
-        :level="level + 1"
-        @update:isRefetch="emit('update:isRefetch')"
-      />
+    <Flex v-if="(level > 1) || showReplies" direction="column" gap="8px"
+      :style="{ marginLeft: level === 1 ? '48px' : '0px' }">
+      <CommentBox v-for="reply in replies" :key="reply.id" :id="reply.id" :name="reply.user.name"
+        :time="reply.created_at" :repliedTo="reply.parent.user.name" :comment="reply.content" :replies="reply.replies"
+        :level="level + 1" @update:isRefetch="emit('update:isRefetch')" />
     </Flex>
   </Flex>
 </template>
@@ -168,5 +151,3 @@ const submitComment = (comment: string) => {
   cursor: pointer;
 }
 </style>
-
-
