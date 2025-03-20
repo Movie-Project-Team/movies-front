@@ -36,7 +36,8 @@ const handleEpisodeChange = (episode: number) => {
       gap="10px"
       wrap="wrap"
     >
-      <p style="color: white; font-size: 1rem;" v-if="episodeList.length === 0">Đang cập nhật</p>
+      <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="8" fill="transparent"
+      v-if="episodeList.length === 0" animationDuration=".5s" aria-label="Custom ProgressSpinner" />
       <Flex
         v-for="(episode, index) in episodeList"
         justify="center"

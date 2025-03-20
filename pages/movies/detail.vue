@@ -77,10 +77,11 @@ const goToDetail = (slug: any) => {
         gap="10px"
         :style="{
           width: '40%',
-          height: '200px',
         }"
       >
+        <Skeleton width="80%" height="30px" v-show="!data?.data" />
         <h1
+          v-show="data?.data"
           :style="{
             color: '#ffffff',
             margin: '10px 0px!important'
@@ -116,10 +117,11 @@ const goToDetail = (slug: any) => {
           />
         </Flex>
         <Flex direction="column" gap="10px">
-          <p :style="{ margin: '4px 0px!important' }">
+          <Flex :style="{ margin: '4px 0px!important' }" gap="8px">
             <span :style="{ fontWeight: '700' }">Đạo diễn: </span>
-            {{ movie.produce_by ?? "Chưa cập nhật" }}
-          </p>
+            <Skeleton width="80%" height="25px" v-show="!data?.data" />
+            <span v-show="data?.data">{{ movie.produce_by ?? "Chưa cập nhật" }}</span>
+          </Flex>
           <p :style="{ margin: '4px 0px!important' }">
             <span :style="{ fontWeight: '700' }">Diễn viên: </span>
             Taito Ban, Genta Nakamura, Haruna Mikawa
@@ -128,7 +130,8 @@ const goToDetail = (slug: any) => {
         <Box>
           <p :style="{ margin: '4px 0px!important', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: '4', overflow: 'hidden' }">
             <span :style="{ fontWeight: '700' }">Giới thiệu: </span>
-            {{ plainDescription }}
+            <Skeleton width="100%" height="40px" v-show="!data?.data" />
+            <span v-show="data?.data">{{ plainDescription }}</span>
           </p>
         </Box>
         <Flex :style="{ marginTop: '20px' }" gap="10px">

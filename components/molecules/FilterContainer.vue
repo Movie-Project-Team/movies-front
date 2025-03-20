@@ -14,8 +14,8 @@ const selectedFilters = ref<Record<string, string | null>>({
   status: null,
   type: null,
 });
-const { data: languageResponse } = useGetListLanguage();
-const { data: genresResponse } = useGetListGenres();
+const { data: languageResponse, isLoading: isLoadingLanguage } = useGetListLanguage();
+const { data: genresResponse, isLoading: isLoadingGenres } = useGetListGenres();
 
 const formatData = (response: any) => {
   return ["Tất cả", ...(response?.value?.data?.map((item: any) => ({
@@ -101,13 +101,15 @@ const applyFilters = () => {
   });
 };
 
+const skeletonLoading = computed(() => isLoadingLanguage.value || isLoadingGenres.value);
 </script>
 
 <template>
   <div class="card">
     <Fieldset legend="Bộ lọc" :toggleable="true">
       <div v-for="(data, index) in filterDataList" :key="index">
-        <ActiveList :data="data" @update="setFilter(data.label, $event)" />
+        <Skeleton v-show="skeletonLoading" width="100%" height="60px" :style="{ marginBottom: '20px' }"/>
+        <ActiveList v-show="!skeletonLoading" :data="data" @update="setFilter(data.label, $event)" />
         <Divider style="--p-divider-border-color: #ffffff10"/>
       </div>   
       <Button :style="{ width: '200px', marginTop: '20px' }" icon="pi pi-arrow-right" label="Lọc kết quả" aria-label="Filter" @click="applyFilters"/>

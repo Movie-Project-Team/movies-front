@@ -7,7 +7,7 @@ import MultiProfileModal from "@/components/molecules/modal/MultiProfileModal.vu
 import { getCookie } from "~/utils/cookie";
 import { logout } from "~/utils";
 import { useGetListMovie } from "~/composables/api/movies/use-get-list-movie";
-import NoticationItem from "@/components/atoms/NotificationItem.vue";
+import NoticationItem from "@/components/atoms/NoticationItem.vue";
 import { useGetListNotification } from "~/composables/api/notification/use-get-list-notification";
 
 const isOpenModal = ref(false);
@@ -91,8 +91,6 @@ const clearInput = () => {
 
 const profileId = ref<number>(Number(profileStore.user?.id));
 const { data: notifications } = useGetListNotification(profileId)
-console.log(notifications);
-
 </script>
 
 <template>
@@ -158,7 +156,8 @@ console.log(notifications);
           </AutoComplete>
         </IconField>
         <Box>
-          <OverlayBadge :value="notifications?.data.length" v-if="profileStore.isVerify && cookieAuth" severity="danger" @click="toggleNotification">
+          <OverlayBadge :value="notifications?.data.length" v-if="profileStore.isVerify && cookieAuth" severity="danger"
+            @click="toggleNotification">
             <Avatar icon="pi pi-bell" size="normal" />
           </OverlayBadge>
           <Popover ref="notificationRef">
@@ -166,10 +165,7 @@ console.log(notifications);
               maxWidth: '350px',
               width: '350px',
             }" direction="column">
-              <NoticationItem 
-                v-for="item in notifications?.data ?? []"
-                :notification="item" 
-              />
+              <NoticationItem v-for="item in notifications?.data ?? []" :notification="item" />
             </Flex>
           </Popover>
         </Box>
