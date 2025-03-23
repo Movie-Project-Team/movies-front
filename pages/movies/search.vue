@@ -48,6 +48,10 @@ const changePage = async (page: number) => {
   setLoading();
   await refetch();
   setTimeout(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
     localLoading.value = false;
   }, 500);
 };

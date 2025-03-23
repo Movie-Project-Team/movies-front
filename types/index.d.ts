@@ -18,6 +18,7 @@ type Movie = {
   thumbnail?: string;
   produce_by?: string,
   tmdb_id?: number,
+  time?: string,
   type?: string,
   season?: number,
   vote_average?: number,
@@ -182,4 +183,25 @@ type NotificationResponse = {
   code: number,
   message: string,
   data: NotificationItem[],
+}
+
+type WatchHistory = {
+  id: number,
+  profile: Profile,
+  movie: Movie,
+  timeProcess: number,
+  episode: number,
+  lastWatchedAt: string
+}
+
+type WatchHistoryDetailResponse = {
+  code: number,
+  message: string,
+  data: WatchHistory,
+}
+
+type WatchHistoryResponse = {
+  code: number,
+  message: string,
+  data: WatchHistory[],
 }

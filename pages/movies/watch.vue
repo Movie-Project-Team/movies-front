@@ -11,6 +11,8 @@ import { useGetComment } from '~/composables/api/movies/use-get-comment';
 import { useGetListCredit } from '~/composables/api/movies/use-get-list-credit';
 import { MovieService } from '~/services/DummnyDataMovie';
 import { useGetMovie } from '~/composables/api/movies/use-get-movie';
+import { useSaveHistory } from '~/composables/api/movies/use-save-history';
+import { useGetHistory } from '~/composables/api/movies/use-get-history';
 
 const tagItems = computed(() => [
   { content: movie.value.vote_average ?? "N/A", subContent: "IMBd", type: "imdb" },
@@ -53,7 +55,7 @@ const { data, isLoading: isLoadingDetailMovie } = useGetMovie(slug);
 const movie = computed<Movie>(() => data.value?.data ?? ({} as Movie));
 
 const movieId = computed(() => {
-  return movie?.value?.id?.toString() || "";
+  return movie?.value?.id || 0;
 });
 
 const plainDescription = computed(() => {
@@ -84,7 +86,6 @@ const countComments = (comments: any[]): number =>
 const updateTotalComments = () => {
   totalComments.value = countComments(commentList.value?.data || []);
 };
-
 watch(() => commentList.value?.data, updateTotalComments, { deep: true, immediate: true })
 
 // handle comment
@@ -131,11 +132,67 @@ const setActive = (index: number) => {
 
 // handle set index episode
 const activeEpisode = ref<number | null>(
-  route.query.ep ? Number(route.query.ep) : null
+  route.query.ep ? Number(route.query.ep) : 1
 );
 watch(() => route.query.ep, (newEp) => {
-  activeEpisode.value = newEp ? Number(newEp) : null;
+  activeEpisode.value = newEp ? Number(newEp) : 1;
 });
+
+// handle video
+const videoPlayer = ref<any>(null);
+const profileId = computed(() => Number(profile.user?.id));
+const { mutate: mutateHistory } = useSaveHistory();
+const { data: detailHistory } = useGetHistory(profileId, movieId);
+
+onMounted(async () => {
+  if (!profile.user) return;
+
+  await nextTick();
+
+  if (!videoPlayer.value) {
+    console.error("videoPlayer is null");
+    return;
+  }
+
+    // Hàm đặt lại currentTime
+    const updateCurrentTime = () => {
+    if (!detailHistory.value?.data || !videoPlayer.value.plyr) return;
+
+    const { timeProcess } = detailHistory.value.data;
+
+    // Kiểm tra nếu plyr đã sẵn sàng thì set ngay, nếu chưa thì chờ sự kiện
+    if (videoPlayer.value.plyr.ready) {
+      videoPlayer.value.plyr.currentTime = timeProcess;
+    } else {
+      videoPlayer.value.plyr.once("loadedmetadata", () => {
+        videoPlayer.value.plyr.currentTime = timeProcess;
+      });
+    }
+  };
+
+  // Lần đầu tiên chạy ngay khi component được mount
+  updateCurrentTime();
+
+  // Theo dõi sự thay đổi của detailHistory
+  watch(() => detailHistory.value?.data, () => {
+    updateCurrentTime();
+  }, { immediate: true, deep: true });
+
+  // Lắng nghe khi video được load lại
+  videoPlayer.value.plyr.on("loadedmetadata", updateCurrentTime);
+});
+
+function handlePause() {
+  if (!profile.user) return;
+
+  mutateHistory({
+    profileId: Number(profile.user?.id),
+    movieId: Number(movieId.value),
+    timeProcess: videoPlayer.value.plyr?.currentTime,
+    episode: Number(activeEpisode.value),
+    lastWatchedAt: new Date().toISOString().slice(0, 19).replace("T", " "),
+  })
+}
 </script>
 
 <template>
@@ -148,7 +205,7 @@ watch(() => route.query.ep, (newEp) => {
     Bạn đang xem phim: Avengers: {{ movie.title }}
   </h2>
   <Box :style="{ width: '100%', height: '900px', position: 'relative', margin: '1rem 0' }">
-    <vue-plyr :style="{ width: '100%', height: '100%', position: 'absolute' }">
+    <vue-plyr @pause="handlePause" :style="{ width: '100%', height: '100%', position: 'absolute' }">
       <video ref="videoPlayer" src="https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-1080p.mp4" data-poster="https://example.com/poster.jpg" controls playsinline width="100%">
         <p>Your browser does not support HTML5 video.</p>
       </video>
@@ -171,7 +228,7 @@ watch(() => route.query.ep, (newEp) => {
       >
         <!-- Img box -->
         <Box 
-          :style="{ 
+          :style="{
             width: '100px', 
             minWidth: '100px',
             position: 'relative', 

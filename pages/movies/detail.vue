@@ -60,7 +60,7 @@ const genreItems = [
 const goToDetail = (slug: any) => {
   router.push({ 
     path: `/xem-phim/${slug}`, 
-    query: { server: 'vietsub', page: 1 } 
+    query: { server: 'vietsub', ep: 1 } 
   });
 };
 </script>

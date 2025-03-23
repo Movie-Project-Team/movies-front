@@ -11,6 +11,8 @@ import WatchContinuteList from '~/components/molecules/WatchContinuteList.vue';
 import { MovieService } from '~/services/DummnyDataMovie';
 import SlideItem from '~/components/atoms/SlideItem.vue';
 import { useGetListMovie } from '~/composables/api/movies/use-get-list-movie';
+import { useGetListHistory } from '@/composables/api/movies/use-get-list-history';
+
 
 const slides = ref(MovieService.getMovieData());
 const params = ref({
@@ -52,6 +54,12 @@ useSwiper(swiperCreativeRef, {
 })
 
 provide('movies', data?.value?.data);
+
+// history data
+const profileStore = useProfileStore();
+const profileId = computed(() => profileStore.user?.id ?? 1);
+
+const { data: historyList } = useGetListHistory(profileId);
 </script>
 
 <template>
@@ -78,8 +86,8 @@ provide('movies', data?.value?.data);
       </div>
     </div>
     <Box :style="{ padding: '0px 50px', marginBottom: '60px' }">
-      <SectionContainer :title="'Xem tiếp'">
-        <WatchContinuteList :data="data?.data ?? []" :is-loading="isLoadingMovie"/>
+      <SectionContainer :title="'Xem tiếp'" v-show="historyList?.data">
+        <WatchContinuteList :data="historyList?.data ?? []" :is-loading="isLoadingMovie"/>
       </SectionContainer>
       <SectionContainer :title="'Bảng xếp hạng'" :style="{display: screenWidth <= 900 ? 'none' : 'flex'}">
         <RankingContainer :data="data?.data ?? []" :is-loading="isLoadingMovie"/>
