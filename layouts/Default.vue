@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import Header from '@/components/molecules/Header.vue';
 import Footer from '@/components/molecules/Footer.vue';
+
+import { onMounted, onUnmounted } from "vue";
+
+const clearStorage = () => {
+  localStorage.removeItem("hasVisited");
+};
+
+onUnmounted(() => {
+  window.removeEventListener("beforeunload", clearStorage);
+});
 </script>
 
 <template>

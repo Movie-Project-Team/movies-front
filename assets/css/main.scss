@@ -86,20 +86,20 @@ i,
 }
 
 .p-tabs {
-    width: 1080px;
+    width: 100%;
 }
 
 .p-autocomplete-input {
     width: 368px;
-    height: 2.8rem;
+    height: 2.7rem;
     border-radius: 0.4rem;
     outline: none !important;
     box-shadow: none !important;
     padding: 0.4rem 3rem;
     line-height: 2rem;
     color: #fff !important;
-    background: #22242c !important;
-    border: 1px solid #444;
+    background: #191b24 !important;
+    border: 1px solid #191b24!important;
     padding: 0px 40px !important;
 }
 
@@ -213,4 +213,8 @@ i,
 .p-popover-content {
     background-color: #1a1c24!important;
     border: 1px solid #1a1c24!important;
+}
+
+.p-skeleton {
+    background: rgba(255, 255, 255, 0.1) !important;
 }

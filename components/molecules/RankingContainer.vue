@@ -33,7 +33,13 @@ const rankingList = [
     label: 'LƯỢT XEM',
     icon: 'pi pi-eye',
     type: 'view'
-  }
+  },
+  {
+    label: 'ĐÁNH GIÁ',
+    icon: 'pi pi-eye',
+    type: 'vote_count'
+  },
+  
 ]
 </script>
 

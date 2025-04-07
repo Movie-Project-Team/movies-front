@@ -6,21 +6,22 @@ import Box from '~/components/atoms/Box.vue';
 import SectionContainer from '~/components/atoms/SectionContainer.vue';
 import MovieList from '~/components/molecules/MovieList.vue';
 import RankingContainer from '~/components/molecules/RankingContainer.vue';
-import { useWindowWidth } from '@/composables/resize/windowWidth';
 import WatchContinuteList from '~/components/molecules/WatchContinuteList.vue';
-import { MovieService } from '~/services/DummnyDataMovie';
+import TopSlideSmall from '~/components/molecules/TopSlideSmall.vue';
 import SlideItem from '~/components/atoms/SlideItem.vue';
 import { useGetListMovie } from '~/composables/api/movies/use-get-list-movie';
-import { useGetListHistory } from '@/composables/api/movies/use-get-list-history';
+import { useGetListHistory } from '~/composables/api/movies/use-get-list-history';
+import Flex from '~/components/atoms/Flex.vue';
+import GokuLoading from '~/components/molecules/GokuLoading.vue';
+import useResponsive from '~/composables/resize/use-responsive';
 
+const { isDesktop, isLaptop, isMobile, isTablet } = useResponsive();
 
-const slides = ref(MovieService.getMovieData());
 const params = ref({
   "item": 10,
   "keyword": '',
 });
 const { data, isLoading: isLoadingMovie } = useGetListMovie(params);
-const screenWidth = useWindowWidth();
 const loading = useLoadingStore();
 watchEffect(() => {
   if (isLoadingMovie.value) {
@@ -60,6 +61,17 @@ const profileStore = useProfileStore();
 const profileId = computed(() => profileStore.user?.id ?? 1);
 
 const { data: historyList } = useGetListHistory(profileId);
+
+// slide data
+const shuffledSlides = computed(() => {
+  const movies = [...(data?.value?.data ?? [])];
+  for (let i = movies.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [movies[i], movies[j]] = [movies[j], movies[i]];
+  }
+  return movies.slice(0, 10);
+});
+
 </script>
 
 <template>
@@ -67,33 +79,52 @@ const { data: historyList } = useGetListHistory(profileId);
     <div class="swiper-wrapper">
       <div class="swiper-wrapper__inner">
         <ClientOnly>
-          <swiper-container ref="swiperCreativeRef" class="swiper-creative" :loop="true" :init="false">
+          <swiper-container ref="swiperCreativeRef" class="swiper-creative" :loop="true" :init="false" v-show="shuffledSlides.length > 0">
             <swiper-slide
-              v-for="slide in slides"
+              v-for="slide in shuffledSlides"
               :key="`slide-creative-${slide.id}`"
               class="swiper-slide"
             >
               <NuxtImg 
-                :src="slide.src"
-                :alt="slide.alt"
+                :src="slide.poster"
+                :alt="slide.poster"
                 style="width: 100%; height: calc(100vh - 40px); object-fit: cover;" 
                 loading="lazy"
               />
               <SlideItem :data="slide" />
             </swiper-slide>
           </swiper-container>
+          <Flex direction="column" align="center" justify="center" gap="40px" :style="{ width: '100%', height: '120vh', minHeight: '120vh' }" v-show="shuffledSlides.length == 0">
+            <GokuLoading />
+            <div>
+              <h2
+              :style="{
+                fontSize: '52px',
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                letterSpacing: '2px',
+                textShadow: '2px 2px 5px rgba(255, 215, 0, 0.5)',
+                margin: '12px 0px !important',
+              }">
+                Đang tải dữ liệu 
+              </h2>
+            </div>
+          </Flex>
         </ClientOnly>
       </div>
     </div>
-    <Box :style="{ padding: '0px 50px', marginBottom: '60px' }">
-      <SectionContainer :title="'Xem tiếp'" v-show="historyList?.data">
+    <Box :style="{ padding: isDesktop ? '0px 50px' : '0px 20px', marginBottom: '60px' }">
+      <SectionContainer :title="'Xem tiếp'" v-show="profileStore.user && historyList?.data && historyList.data.length > 0">
         <WatchContinuteList :data="historyList?.data ?? []" :is-loading="isLoadingMovie"/>
       </SectionContainer>
-      <SectionContainer :title="'Bảng xếp hạng'" :style="{display: screenWidth <= 900 ? 'none' : 'flex'}">
+      <SectionContainer :title="'Bảng xếp hạng'" v-show="isDesktop">
         <RankingContainer :data="data?.data ?? []" :is-loading="isLoadingMovie"/>
       </SectionContainer>
       <SectionContainer :title="'Phim mới'">
         <MovieList :data="data?.data ?? []" :is-loading="isLoadingMovie"/>
+      </SectionContainer>
+      <SectionContainer :title="'Phim hot'" v-show="isDesktop">
+        <TopSlideSmall :data="data?.data ?? []"/>
       </SectionContainer>
     </Box>
   </main>

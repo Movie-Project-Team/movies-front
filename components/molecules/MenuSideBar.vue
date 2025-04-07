@@ -56,12 +56,6 @@ const items = ref([
       router.push('/sap-chieu');
     },
   },
-  {
-    label: 'Diễn viên',
-  },
-  {
-    label: 'Tin tức',
-  }
 ]);
 </script>
 

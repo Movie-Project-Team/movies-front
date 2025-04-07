@@ -2,7 +2,7 @@
 import MovieCard from '../atoms/MovieCard.vue';
 import Flex from '../atoms/Flex.vue';
 import Box from '../atoms/Box.vue';
-import { useGetListRanking } from '@/composables/api/movies/use-get-list-ranking';
+import { useGetListRanking } from '~/composables/api/movies/use-get-list-ranking';
 
 const props = defineProps<{
   type?: string;
@@ -15,7 +15,7 @@ const { data } = useGetListRanking(type);
 <template>
   <ClientOnly>
     <Flex direction="column" align="flex-start" justify="flex-start">
-      <Box v-for="(movie, index) in data?.data" :key="index" :style="{ width: '100%', padding: '8px 0px' }">
+      <Box v-for="(movie, index) in data?.data.slice(0, 5)" :key="index" :style="{ width: '100%', padding: '8px 0px' }">
         <MovieCard :data="movie" :is-ver2="true" :pos="index + 1" :key="movie.id"/>
       </Box>
     </Flex>

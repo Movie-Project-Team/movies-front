@@ -38,6 +38,17 @@ export default <RouterConfig>{
           path: 'sap-chieu',
           component: () => import('~/pages/movies/upcoming.vue'),
         },
+        {
+          name: 'profile',
+          path: 'profile',
+          children: [
+            {
+              name: 'profile-information',
+              path: '',
+              component: () => import('@/pages/profiles/infomation.vue'),
+            }
+          ]
+        },
       ]
     },
   ], 

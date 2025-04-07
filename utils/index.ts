@@ -15,3 +15,10 @@ export function calculateWatchedPercentage(timeProcess: number, movieTimeStr: st
     const movieTime = extractNumber(movieTimeStr) * 60 || 183;
     return (timeProcess / movieTime) * 100;
 }
+
+export function getPlainDescription(html: string): string {
+    return (html || '')
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .trim();
+}

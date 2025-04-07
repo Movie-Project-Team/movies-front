@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/vue-query";
 import { apiReClient } from "~/utils/apiReClient";
 import { useLoadingStore } from "~/stores/loading";
 
-const ENDPOINT = '/profile/history/save';
+const ENDPOINT = '/movie/history/save';
 
 interface HistoryPayload {
   profileId: number;

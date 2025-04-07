@@ -14,6 +14,7 @@ export default defineNuxtConfig({
     'pinia-plugin-persistedstate/nuxt',
     'nuxt-swiper',
     '@nuxt/image',
+    'nuxt-emoji-picker',
   ],
   primevue: {
     autoImport: true,

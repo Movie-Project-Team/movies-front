@@ -19,6 +19,7 @@ type Movie = {
   produce_by?: string,
   tmdb_id?: number,
   time?: string,
+  lang?: string,
   type?: string,
   season?: number,
   vote_average?: number,
@@ -204,4 +205,15 @@ type WatchHistoryResponse = {
   code: number,
   message: string,
   data: WatchHistory[],
+}
+
+type tvTMDB = {
+  id: number,
+  name: string,
+  media_type: string
+}
+
+type tvTMDBResponse = {
+  tv_results: tvTMDB[],
+  movie_results: tvTMDB
 }

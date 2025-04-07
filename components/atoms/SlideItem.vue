@@ -3,34 +3,70 @@ import { useGetImage } from '@/composables/api/movies/use-get-image';
 import Box from './Box.vue';
 import Flex from './Flex.vue';
 import Tag from './Tag.vue';
+import { useGetMovieById } from '~/composables/api/movies/use-get-by-id';
+import useResponsive from '@/composables/resize/use-responsive';
 
 const props = defineProps<{
-  data: {
-    type: string,
-    tmdb_id: number,
-    title: string,
-    imdb: number;
-    model: string;
-    releaseYear: number;
-    totalEpisodes: number;
-    genres: string[];
-    description: string;
-  };
+  data: Movie;
 }>();
 
-const config = useRuntimeConfig();
-const typeRef = computed(() => props.data.type);
-const tmdbIdRef = computed(() => props.data.tmdb_id.toString());
+const tagItems = computed(() => [
+  { content: props.data.vote_average ?? "N/A", subContent: "IMBd", type: "imdb" },
+  { content: "T12", type: "background" },
+  { content: props.data.year ?? "N/A" },
+  { 
+    content: props.data.season 
+      ? `Phần ${props.data.season}` 
+      : "Chưa cập nhật" 
+  },
+  { 
+    content: props.data.esp_total 
+      ? props.data.esp_total.toString().includes("Tập") 
+        ? props.data.esp_total 
+        : `${props.data.esp_total} Tập ` 
+      : "Chưa cập nhật" 
+  }
+]);
 
-const { data: image } = useGetImage(typeRef, tmdbIdRef);
-const firstLogoUrl = computed(() => {
-  return image.value?.logos?.length ? image.value.logos[0].file_path : null;
+const genreItems = [
+  { content: "Hành Động", type: "topic" },
+  { content: "Viễn Tưởng", type: "topic" },
+  { content: "Phiêu Lưu", type: "topic" },
+  { content: "Khoa Học", type: "topic" }
+];
+
+const plainDescription = computed(() => {
+  return (props.data.description || 'Chưa cập nhật')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim();
 });
+
+// const config = useRuntimeConfig();
+// const typeRef = computed(() => props.data?.type || 'movie'); 
+// const tmdbIdRef = computed(() => props.data?.tmdb_id ? String(props.data.tmdb_id) : '');
+// const { data: tvTMDB } = useGetMovieById(tmdbIdRef, typeRef);
+
+// const resolvedTmdb = computed(() => {
+//   if (typeRef.value === "tv" && tvTMDB.value?.tv_results?.[0]?.id) {
+//     return String(tvTMDB.value.tv_results[0].id);
+//   }
+//   return tvTMDB.value?.movie_results.id ?? "113268";
+// });
+
+// const { data: image } = useGetImage(typeRef as Ref<string>, resolvedTmdb as Ref<string>);
+
+// const firstLogoUrl = computed(() => {
+//   return image.value?.logos?.length ? image.value.logos[0].file_path : null;
+// });
+
+// responsive
+const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 </script>
 
 <template>
-  <Flex direction="column" justify="center" class="slide-content">
-    <NuxtImg
+  <Flex direction="column" justify="center" class="slide-content" :gap="isMobile ? '16px' : '0px'">
+    <!-- <NuxtImg
       v-if="firstLogoUrl" 
       :src="`${config.public.imageTmdbDomain}/${firstLogoUrl}`"
       :alt="`${config.public.imageTmdbDomain}/${firstLogoUrl}`"
@@ -41,25 +77,32 @@ const firstLogoUrl = computed(() => {
       }"
       loading="lazy"
       fit="cover"
-    />
+    /> -->
     <h2
-      v-else
       :style="{
-        fontSize: '52px',
-        marginBottom: '16px!important'
+        fontSize: isDesktop ? '52px' : '24px',
+        textAlign: isMobile ? 'center' : 'start',
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        letterSpacing: '2px',
+        textShadow: '2px 2px 5px rgba(255, 215, 0, 0.5)',
+        margin: '12px 0px !important',
       }"
     >
       {{ data.title }}
     </h2>
     <Flex gap="10px" direction="column"> 
-      <Flex gap="8px">
-        <Tag :content="data.imdb" :sub-content="'IMBd'" :type="'imdb'"/>
-        <Tag :content="data.model" :type="'background'"/>
-        <Tag :content="data.releaseYear" :type="'classic'"/>
-        <Tag :content="data.totalEpisodes" :sub-content="'Tập'" :type="'classic'"/>
+      <Flex gap="8px" :justify="isMobile ? 'center' : 'flex-start'">
+        <Tag
+          v-for="(tag, index) in tagItems"
+          :key="index"
+          :content="tag.content"
+          :sub-content="tag.subContent"
+          :type="tag.type"
+        />
       </Flex>
-      <Flex gap="8px">
-        <Tag v-for="(genre, index) in data.genres" :key="index" :content="genre" :type="'topic'"/>
+      <Flex gap="8px" :justify="isMobile ? 'center' : 'flex-start'">
+        <Tag v-for="(genre, index) in genreItems" :key="index" :content="genre.content" :type="'topic'"/>
       </Flex>
       <Box 
         :style="{
@@ -69,19 +112,27 @@ const firstLogoUrl = computed(() => {
           textShadow: '0 1px 1px rgba(0, 0, 0, .2)',
           fontWeight: 400,
           marginBottom: '2rem',
+          display: '-webkit-box', 
+          WebkitBoxOrient: 'vertical', 
+          WebkitLineClamp: '3', 
+          overflow: 'hidden',
+          maxWidth: '50%'
         }"
+        v-show="isDesktop"
       >
-        {{ data.description }}
+        {{ plainDescription }}
       </Box>
     </Flex>
-    <Button 
-      label="Xem ngay"
-      icon="pi pi-play-circle"
-      aria-label="Filter" 
-      :style="{
-        width: '170px',
-        padding: '15px 31px',
-      }"/>
+    <Flex :justify="isMobile ? 'center' : 'flex-start'" :style="{ width: '100%' }">
+      <Button 
+        label="Xem ngay"
+        icon="pi pi-play-circle"
+        aria-label="Filter" 
+        :style="{
+          width: '170px',
+          padding: '15px 31px',
+        }"/>
+    </Flex>
   </Flex>
 </template>
 

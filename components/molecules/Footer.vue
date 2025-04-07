@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import useResponsive from '@/composables/resize/use-responsive';
 import Box from '../atoms/Box.vue';
 import Flex from '../atoms/Flex.vue';
 import { ref } from "vue";
@@ -16,6 +17,8 @@ const menuItems = [
 const setActive = (index: number) => {
   activeItem.value = index;
 };
+
+const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 </script>
 
 <template>
@@ -46,7 +49,7 @@ const setActive = (index: number) => {
       >
         <Flex gap="60px">
           <img src="https://streamvid.jwsuperthemes.com/wp-content/uploads/2023/02/logo.svg" alt="">
-          <Flex gap="20px">
+          <Flex gap="20px" v-show="isDesktop">
             <Avatar icon="pi pi-facebook" class="mr-2" shape="circle" />
             <Avatar icon="pi pi-tiktok" class="mr-2" shape="circle" />
             <Avatar icon="pi pi-instagram" class="mr-2" shape="circle" />

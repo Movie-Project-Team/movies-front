@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Flex from './Flex.vue';
+import Box from './Box.vue';
 
 const props = defineProps<{
   data: WatchHistory;
@@ -9,15 +10,13 @@ const timeProcess = computed(() => props.data.timeProcess);
 const watchPercent = computed(() => calculateWatchedPercentage(timeProcess.value))
 const router = useRouter();
 const movieStore = useMovieStore();
-
 const goToDetail = () => {
-    movieStore.setMovieId(props.data.movie.id);
-    router.push({ 
+  movieStore.setMovieId(props.data.movie.id);
+  router.push({ 
     path: `/xem-phim/${props.data.movie.slug}`, 
     query: { server: 'vietsub', ep: props.data.episode } 
   });
 };
-
 const lastWatchedAt = computed(() => {
     return formatDate(new Date(props.data.lastWatchedAt), "DD-MM-YYYY HH:mm:ss");
 });
@@ -34,6 +33,7 @@ const lastWatchedAt = computed(() => {
       :src="data?.movie.poster" 
       :alt="data?.movie.poster" 
       :style="{
+        width: '290px',
         height: '170px',
         borderRadius: '8px',
         objectFit: 'cover'
@@ -42,11 +42,6 @@ const lastWatchedAt = computed(() => {
     <h4 
       :style="{ 
         fontSize: '14px',
-        display: '-webkit-box', 
-        WebkitBoxOrient: 'vertical', 
-        WebkitLineClamp: '1', 
-        overflow: 'hidden',
-        margin: '8px 0px'
       }"
     >
       {{ data.movie.title }}

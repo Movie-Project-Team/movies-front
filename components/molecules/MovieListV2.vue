@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Flex from '../atoms/Flex.vue';
 import MovieCard from '../atoms/MovieCard.vue';
-import SkeletonContainer from '@/components/molecules/SkeletonContainer.vue';
+import SkeletonContainer from './SkeletonContainer.vue';
 
 const props = defineProps<{
   data: Movie[] | MovieTmdb[] | undefined;

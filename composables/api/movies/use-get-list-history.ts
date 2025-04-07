@@ -1,11 +1,11 @@
 import { keepPreviousData, useQuery } from "@tanstack/vue-query";
 import { apiReClient } from "@/utils/apiReClient";
 
-const ENDPOINT = '/profile';
+const ENDPOINT = '/movie/history';
 
 const fetchData = async (profileId: number): Promise<WatchHistoryResponse> => {
   const api = apiReClient();
-  const response = await api<WatchHistoryResponse>(`${ENDPOINT}/${profileId}/history`, {
+  const response = await api<WatchHistoryResponse>(`${ENDPOINT}/${profileId}`, {
     method: 'GET',
   });
   return response;

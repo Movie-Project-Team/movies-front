@@ -1,20 +1,28 @@
 <script setup lang="ts">
 import { IconField, InputIcon, Menu, OverlayBadge, Popover, Toolbar } from "primevue";
 import Flex from "../atoms/Flex.vue";
+import Box from "../atoms/Box.vue";
 import MenuSideBar from "./MenuSideBar.vue";
 import AuthModal from "./modal/AuthModal.vue";
 import MultiProfileModal from "@/components/molecules/modal/MultiProfileModal.vue";
 import { getCookie } from "~/utils/cookie";
 import { logout } from "~/utils";
 import { useGetListMovie } from "~/composables/api/movies/use-get-list-movie";
-import NoticationItem from "@/components/atoms/NoticationItem.vue";
+import NoticationItem from "../atoms/NoticationItem.vue";
 import { useGetListNotification } from "~/composables/api/notification/use-get-list-notification";
+import useResponsive from "~/composables/resize/use-responsive";
 
 const isOpenModal = ref(false);
 const isLoginSuccess = ref(false);
+const isSearchVisible = ref(false);
 const cookieAuth = getCookie("access_token");
 const profileStore = useProfileStore();
 const notificationRef = ref();
+const router = useRouter();
+
+const toggleSearch = () => {
+  isSearchVisible.value = !isSearchVisible.value;
+};
 
 const handleLoginSuccess = (isSuccess: boolean) => {
   isLoginSuccess.value = isSuccess;
@@ -78,7 +86,7 @@ const search = async (event: any) => {
     suggestions.value = [];
     return;
   }
-
+  
   await refetch();
   suggestions.value = data.value?.data ?? [];
 };
@@ -89,45 +97,91 @@ const clearInput = () => {
   refetch();
 };
 
+const goToSearchPage = () => {
+  if (searchQuery.value.trim()) {
+    router.push({
+      path: "/tim-kiem",
+      query: { 
+        page: 1, 
+        keyword: searchQuery.value.trim() 
+      }
+    });
+  }
+};
+
 const profileId = ref<number>(Number(profileStore.user?.id));
 const { data: notifications } = useGetListNotification(profileId)
+
+// responsive
+const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 </script>
 
 <template>
-  <Toolbar :style="{
-    border: '0px',
-    width: '100%',
-    borderRadius: '0px',
-    height: '90px',
-    padding: '0px 70px',
-    background: 'none',
-    fontWeight: '600',
-  }">
+  <Toolbar
+    :style="{
+      border: '0px',
+      width: '100%',
+      borderRadius: '0px',
+      height: isDesktop ? '90px' : '',
+      padding: isDesktop ? '0px 70px' : '0px 20px',
+      background: isDesktop ? 'none' : '#191b24',
+      fontWeight: '600',
+    }"
+  >
     <template #start>
-      <Flex>
-        <img src="https://streamvid.jwsuperthemes.com/wp-content/uploads/2023/02/logo.svg" alt="" />
+      <Flex :direction="(isDesktop || isLaptop) ? 'row' : 'row-reverse'" :style="{ visibility: isSearchVisible ? 'hidden' : 'visible' }">
+        <img
+          src="https://streamvid.jwsuperthemes.com/wp-content/uploads/2023/02/logo.svg"
+          alt=""
+          :style="{
+            width: !isDesktop ? '120px' : '200px',
+          }"
+          @click="router.push('/')"
+        />
         <MenuSideBar />
       </Flex>
     </template>
     <template #end>
       <Flex gap="24px" align="center">
-        <IconField :style="{
-          position: 'relative',
-        }">
+        <IconField
+          :style="{
+            position: !isDesktop ? 'absolute' : 'relative',
+            width: !isDesktop ? '70%!important' : 'auto!important',
+            top: '0',
+            left: '0',
+          }"
+          v-if="isSearchVisible || isDesktop"
+        >
           <InputIcon>
             <i class="pi pi-search"></i>
           </InputIcon>
-          <AutoComplete v-model="searchQuery" :suggestions="suggestions" @complete="search"
-            placeholder="Tìm kiếm phim, diễn viên" @item-select="clearInput">
+          <AutoComplete
+            v-model="searchQuery"
+            :suggestions="suggestions"
+            @complete="search"
+            placeholder="Tìm kiếm phim, diễn viên"
+            @item-select="clearInput"
+            @keyup.enter="goToSearchPage"
+            :style="{ width: 'calc(100% + 60px)' }"
+          >
             <template #option="slotProps">
               <NuxtLink :to="`/phim/${slotProps.option.slug}`" style="text-decoration: none; color: inherit;">
                 <Flex gap="10px">
-                  <NuxtImg :src="slotProps.option.thumbnail" alt="icon" :style="{
-                    width: '50px',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }" />
-                  <Flex direction="column" gap="14px" justify="center" align="flex-start">
+                  <NuxtImg
+                    :src="slotProps.option.thumbnail"
+                    alt="icon"
+                    :style="{
+                      width: '50px',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }"
+                  />
+                  <Flex
+                    direction="column"
+                    gap="14px"
+                    justify="center"
+                    align="flex-start"
+                  >
                     <h4 :style="{ fontSize: '12px', margin: '0px' }">
                       {{ slotProps.option.title }}
                     </h4>
@@ -135,7 +189,7 @@ const { data: notifications } = useGetListNotification(profileId)
                       {{ slotProps.option.name }}
                     </h4>
                     <Flex :style="{ fontSize: '12px', color: '#aaa' }">
-                      {{ slotProps.option.year }}
+                      {{ slotProps.option.year }} 
                       <Divider layout="vertical" />
                       {{ slotProps.option.lang }}
                       <Divider layout="vertical" />
@@ -146,18 +200,22 @@ const { data: notifications } = useGetListNotification(profileId)
               </NuxtLink>
             </template>
             <template #header>
-              <div :style="{
-                fontWeight: '700',
-                padding: '15px 15px 4px',
-              }">
+              <div
+                :style="{
+                  fontWeight: '700',
+                  padding: '15px 15px 4px',
+                }"
+              >
                 Danh sách phim
               </div>
             </template>
           </AutoComplete>
         </IconField>
-        <Box>
-          <OverlayBadge :value="notifications?.data.length" v-if="profileStore.isVerify && cookieAuth" severity="danger"
-            @click="toggleNotification">
+        <template v-if="!isDesktop">
+          <i :class="!isSearchVisible ? 'pi pi-search' : 'pi pi-times'" style="cursor: pointer" @click="toggleSearch"></i>
+        </template>
+        <Box v-show="isDesktop">
+          <OverlayBadge :value="notifications?.data.length" v-if="profileStore.isVerify && cookieAuth" severity="danger" @click="toggleNotification">
             <Avatar icon="pi pi-bell" size="normal" />
           </OverlayBadge>
           <Popover ref="notificationRef">
@@ -165,26 +223,63 @@ const { data: notifications } = useGetListNotification(profileId)
               maxWidth: '350px',
               width: '350px',
             }" direction="column">
-              <NoticationItem v-for="item in notifications?.data ?? []" :notification="item" />
+              <NoticationItem 
+                v-for="item in notifications?.data ?? []"
+                :notification="item" 
+              />
             </Flex>
           </Popover>
         </Box>
         <Flex v-if="profileStore.isVerify && cookieAuth">
-          <Avatar shape="circle" image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" @click="toggle"
-            aria-haspopup="true" aria-controls="overlay_tmenu" />
-          <Menu ref="menu" id="overlay_tmenu" :model="items" popup :style="{
-            background: 'rgba(15, 17, 26, .95)',
-            border: 'none',
-            color: '#fff',
-          }" />
+          <Avatar
+            shape="circle"
+            image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
+            @click="toggle"
+            aria-haspopup="true"
+            aria-controls="overlay_tmenu"
+          />
+          <Menu
+            ref="menu"
+            id="overlay_tmenu"
+            :model="items"
+            popup
+            :style="{
+              background: 'rgba(15, 17, 26, .95)',
+              border: 'none',
+              color: '#fff',
+            }"
+          />
         </Flex>
-        <Button label="Đăng nhập" icon="pi pi-user" :style="{ padding: '10px' }" raised @click="isOpenModal = true"
-          v-else />
+        <div v-else>
+          <Button
+            v-if="isDesktop"
+            label="Đăng nhập"
+            icon="pi pi-user"
+            :style="{ padding: '10px' }"
+            raised
+            @click="isOpenModal = true"
+          />
+          <i
+            v-else-if="isLaptop"
+            class="pi pi-user"
+            :style="{ padding: '10px', cursor: 'pointer' }"
+            @click="isOpenModal = true"
+          />
+        </div>
       </Flex>
-      <AuthModal :visible="isOpenModal" @authSuccess="handleLoginSuccess" @update:visible="isOpenModal = $event" />
-      <MultiProfileModal v-if="isLoginSuccess" :visible="isLoginSuccess" @update:visible="isLoginSuccess = $event" />
+      <AuthModal
+        :visible="isOpenModal"
+        @authSuccess="handleLoginSuccess"
+        @update:visible="isOpenModal = $event"
+      />
+      <MultiProfileModal
+        v-if="isLoginSuccess"
+        :visible="isLoginSuccess"
+        @update:visible="isLoginSuccess = $event"
+      />
     </template>
   </Toolbar>
 </template>
 
-<style scoped></style>
+<style scoped>
+</style>

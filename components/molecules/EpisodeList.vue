@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import useResponsive from '~/composables/resize/use-responsive';
 import Box from '../atoms/Box.vue';
 import Flex from '../atoms/Flex.vue';
 
@@ -28,6 +29,8 @@ const handleEpisodeChange = (episode: number) => {
     query: { server: "vietsub", ep: episode },
   });
 };
+
+const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 </script>
 
 <template>
@@ -47,7 +50,7 @@ const handleEpisodeChange = (episode: number) => {
         :style="{
           opacity: activeEpisode == Number(episode) ? '1' : '.8',
           backgroundColor: activeEpisode == Number(episode) ? '#ffd875' : '#282b3a',
-          width: '146px',
+          width: (isDesktop || isLaptop) ? '146px' : '110px',
           height: '50px',
           borderRadius: '0.5rem',
           cursor: 'pointer',

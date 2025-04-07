@@ -30,6 +30,7 @@ useSwiper(swiperCreativeRef, {
     },
   },
 })
+
 </script>
 
 <template>
@@ -37,12 +38,12 @@ useSwiper(swiperCreativeRef, {
     <SkeletonContainer v-show="loadingState" type="list" :is-image-list="true" :number-data="6"/>
     <swiper-container v-show="!loadingState" ref="swiperCreativeRef" :style="{ width: '100%' }" class="swiper-creative" :loop="true" :init="false">
       <swiper-slide
-        v-for="(item, index) in data"
-        :key="`slide-creative-${index}`"
+        v-for="movie in data"
+        :key="`slide-creative-${movie.id}`"
         class="swiper-slide"
         :style="{ width: '221px!important' }"
       >
-        <MovieCardHorizon :data="item"/>
+        <MovieCardHorizon :data="movie"/>
       </swiper-slide>
     </swiper-container>
   </ClientOnly>
