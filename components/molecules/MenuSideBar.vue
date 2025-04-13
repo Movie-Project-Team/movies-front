@@ -6,6 +6,7 @@ import { useGetListLanguage } from '~/composables/api/util/use-get-list-language
 const { data: languageResponse } = useGetListLanguage();
 const { data: genresResponse } = useGetListGenres();
 const router = useRouter();
+const cookieAuth = getCookie("access_token");
 
 const resetQuery = (type) => {
   router.replace({ path: '/tim-kiem', query: { [type]: null, page: 1 } });
@@ -56,7 +57,19 @@ const items = ref([
       router.push('/sap-chieu');
     },
   },
+  {
+    label: 'Xem chung',
+    command: () => {
+      if (!cookieAuth) {
+        emit('openAuthModal');
+      } else {
+        router.push("/xem-chung");
+      }
+    },
+  },
 ]);
+
+const emit = defineEmits(['openAuthModal']);
 </script>
 
 <template>

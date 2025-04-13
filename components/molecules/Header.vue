@@ -19,9 +19,14 @@ const cookieAuth = getCookie("access_token");
 const profileStore = useProfileStore();
 const notificationRef = ref();
 const router = useRouter();
+const route = useRoute();
 
 const toggleSearch = () => {
   isSearchVisible.value = !isSearchVisible.value;
+};
+
+const openAuthModal = () => {
+  isOpenModal.value = true;
 };
 
 const handleLoginSuccess = (isSuccess: boolean) => {
@@ -70,6 +75,21 @@ const toggleNotification = (event: any) => {
   notificationRef.value.toggle(event);
 };
 
+onMounted(() => {
+  const loginModalFlag = route.query.openLoginModal;
+  if (loginModalFlag) {
+    isOpenModal.value = true;
+
+    router.replace({
+      path: route.path,
+      query: {
+        ...route.query,
+        openLoginModal: undefined,
+      },
+    });
+  }
+});
+
 const searchQuery = ref("");
 const suggestions = ref<Movie[]>([]);
 const params = ref({
@@ -113,7 +133,7 @@ const profileId = ref<number>(Number(profileStore.user?.id));
 const { data: notifications } = useGetListNotification(profileId)
 
 // responsive
-const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
+const { isLaptop, isDesktop } = useResponsive();
 </script>
 
 <template>
@@ -138,7 +158,7 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
           }"
           @click="router.push('/')"
         />
-        <MenuSideBar />
+        <MenuSideBar @openAuthModal="openAuthModal"/>
       </Flex>
     </template>
     <template #end>
@@ -215,9 +235,10 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
           <i :class="!isSearchVisible ? 'pi pi-search' : 'pi pi-times'" style="cursor: pointer" @click="toggleSearch"></i>
         </template>
         <Box v-show="isDesktop">
-          <OverlayBadge :value="notifications?.data.length" v-if="profileStore.isVerify && cookieAuth" severity="danger" @click="toggleNotification">
+          <OverlayBadge :value="notifications?.data.length" v-if="profileStore.isVerify && cookieAuth && (notifications?.data && notifications?.data.length > 0)" severity="danger" @click="toggleNotification">
             <Avatar icon="pi pi-bell" size="normal" />
           </OverlayBadge>
+          <Avatar icon="pi pi-bell" size="normal" v-else @click="toggleNotification"/>
           <Popover ref="notificationRef">
             <Flex :style="{
               maxWidth: '350px',

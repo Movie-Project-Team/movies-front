@@ -2,6 +2,7 @@ type Route = {
   path: string;
   title?: string;
   isPublic?: boolean;
+  requiresDefaultPageQuery?: boolean;
 };
 
 type Routes = {
@@ -216,4 +217,28 @@ type tvTMDB = {
 type tvTMDBResponse = {
   tv_results: tvTMDB[],
   movie_results: tvTMDB
+}
+
+type RoomResponse = {
+  id: number,
+  room_code: string,
+  name: string,
+  is_locked: Boolean,
+  capacity: number,
+  status: number,
+  host: Profile,
+  movie: Movie,
+  created_at: Datetime,
+}
+
+type RoomListResponse = {
+  code: number,
+  message: string,
+  data: RoomResponse[],
+}
+
+type RoomDetailResponse = {
+  code: number,
+  message: string,
+  data: RoomResponse,
 }

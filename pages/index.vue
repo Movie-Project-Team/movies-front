@@ -69,9 +69,8 @@ const shuffledSlides = computed(() => {
     const j = Math.floor(Math.random() * (i + 1));
     [movies[i], movies[j]] = [movies[j], movies[i]];
   }
-  return movies.slice(0, 10);
-});
-
+  return movies.slice(0, 5);
+}); 
 </script>
 
 <template>
@@ -99,7 +98,7 @@ const shuffledSlides = computed(() => {
             <div>
               <h2
               :style="{
-                fontSize: '52px',
+                fontSize: !isMobile ? '52px' : '20px',
                 fontWeight: 'bold',
                 textTransform: 'uppercase',
                 letterSpacing: '2px',

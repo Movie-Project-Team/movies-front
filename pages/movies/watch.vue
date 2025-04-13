@@ -15,6 +15,8 @@ import { useGetHistory } from '~/composables/api/movies/use-get-history';
 import { useGetMovieById } from '~/composables/api/movies/use-get-by-id';
 import { useGetListRecommend } from '~/composables/api/movies/use-get-list-recommend';
 import ChatBox from '~/components/molecules/ChatBox.vue';
+import useResponsive from '~/composables/resize/use-responsive';
+import { useEcho } from '~/composables/echo/use-echo';
 import Camera from '~/components/molecules/Camera.vue';
 
 const tagItems = computed(() => [
@@ -106,7 +108,7 @@ const submitComment = (comment: string) => {
         await refetchComment();
         updateTotalComments();
       },
-      onError: (error: any) => {  
+      onError: (error: any) => {
         console.error("Lỗi gửi bình luận:", error);
       },
     }
@@ -221,23 +223,354 @@ function watchTogether() {
     query: { room: 123 } 
   });
 }
+
+useHead(() => ({
+  title: movie.value.title ? `Xem Phim - ${movie.value.title}` : 'Đang tải...',
+  link: [
+    {
+      rel: 'preload',
+      as: 'image',
+      href: movie.value.poster,
+    },
+    {
+      rel: 'preload',
+      as: 'image',
+      href: movie.value.thumbnail,
+    },
+  ],
+}));
+
+// responsive
+const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
+
+// webrtc and boashcating laravel
+const users = ref<any[]>([])
+const roomStatus = ref('active')
+const myCameraOn = ref(false);
+const localStream = ref<MediaStream | null>(null);
+const remoteVideoRefs = reactive<Record<number, HTMLVideoElement | null>>({})
+
+// Lưu các kết nối của user khác, key là userId
+const peerConnections = reactive<Record<number, RTCPeerConnection>>({});
+// Lưu remote streams của user khác, key là userId
+const remoteStreams = reactive<Record<number, MediaStream>>({});
+function setRemoteVideo(el: Element | ComponentPublicInstance | null, userId: number) {
+  const videoEl = el as HTMLVideoElement | null
+  if (videoEl && remoteStreams[userId]) {
+    videoEl.srcObject = remoteStreams[userId]
+  }
+}
+
+const echo = useEcho()
+let channel: any = null
+
+// Cấu hình RTCPeerConnection
+const rtcConfiguration = {
+  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+};
+
+// Hàm bật/tắt camera
+const toggleCamera = async () => {
+  myCameraOn.value = !myCameraOn.value
+  channel.whisper('camera-state-changed', {
+    userId: profile.user?.id,
+    isCameraOn: myCameraOn.value,
+  })
+
+  if (myCameraOn.value) {
+    try {
+      // Lấy local stream từ thiết bị
+      localStream.value = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+
+      // Với mỗi thành viên khác, nếu chưa có kết nối thì tạo kết nối và gửi offer
+      users.value.forEach((member: any) => {
+        if (member.id === profile.user?.id) return
+
+        if (!peerConnections[member.id]) {
+          const pc = new RTCPeerConnection(rtcConfiguration)
+          peerConnections[member.id] = pc
+
+          // Thêm các track từ localStream vào kết nối
+          localStream.value?.getTracks().forEach((track) => {
+            pc.addTrack(track, localStream.value!)
+          })
+
+          // Lắng nghe sự kiện ontrack để nhận remote stream
+          pc.ontrack = (event) => {
+            if (event.streams && event.streams[0]) {
+              remoteStreams[member.id] = event.streams[0]
+            }
+          }
+
+          // Gửi ICE candidate qua signaling (sử dụng whisper; ép kiểu channel sang any)
+          pc.onicecandidate = (event) => {
+            if (event.candidate) {
+              (channel as any).whisper('webrtc.signal', {
+                to: member.id,
+                from: profile.user?.id,
+                candidate: event.candidate
+              })
+            }
+          }
+
+          // Tạo offer và gửi qua signaling
+          pc.createOffer()
+            .then((offer) => pc.setLocalDescription(offer))
+            .then(() => {
+              (channel as any).whisper('webrtc.signal', {
+                to: member.id,
+                from: profile.user?.id,
+                sdp: peerConnections[member.id].localDescription
+              })
+            })
+            .catch((error) => {
+              console.error('Error creating offer: ', error)
+            })
+        }
+      })
+    } catch (error) {
+      console.error('Error getting local stream', error)
+    }
+  } else {
+    // Tắt camera: dừng localStream và đóng các kết nối WebRTC
+    if (localStream.value) {
+      localStream.value.getTracks().forEach((track) => track.stop())
+      localStream.value = null
+    }
+    Object.values(peerConnections).forEach((pc) => pc.close())
+    for (const key in peerConnections) {
+      delete peerConnections[key]
+    }
+    for (const key in remoteStreams) {
+      delete remoteStreams[key]
+    }
+  }
+}
+
+// --- Các sự kiện của Laravel Echo ---
+onMounted(() => {
+  channel = echo.join(`room.${roomId.value}`)
+    .here((members: any[]) => {
+      // Lưu danh sách thành viên ban đầu
+      users.value = members
+      console.log('Các thành viên hiện có:', members)
+    })
+    .joining((member: any) => {
+      // Khi có user mới join
+      users.value.push(member)
+      console.log('Thành viên join:', member)
+
+      // Nếu mình đang bật camera thì tạo kết nối mới cho user mới join
+      if (myCameraOn.value && localStream.value) {
+        const pc = new RTCPeerConnection(rtcConfiguration)
+        peerConnections[member.id] = pc
+        localStream.value.getTracks().forEach((track) => {
+          pc.addTrack(track, localStream.value!)
+        })
+
+        pc.ontrack = (event) => {
+          if (event.streams && event.streams[0]) {
+            remoteStreams[member.id] = event.streams[0]
+          }
+        }
+
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            (channel as any).whisper('webrtc.signal', {
+              to: member.id,
+              from: profile.user?.id,
+              candidate: event.candidate
+            })
+          }
+        }
+
+        pc.createOffer()
+          .then((offer) => pc.setLocalDescription(offer))
+          .then(() => {
+            (channel as any).whisper('webrtc.signal', {
+              to: member.id,
+              from: profile.user?.id,
+              sdp: pc.localDescription
+            })
+          })
+          .catch(console.error)
+      }
+    })
+    .leaving((member: any) => {
+      users.value = users.value.filter((u) => u.id !== member.id)
+      if (peerConnections[member.id]) {
+        peerConnections[member.id].close()
+        delete peerConnections[member.id]
+      }
+      if (remoteStreams[member.id]) {
+        delete remoteStreams[member.id]
+      }
+      console.log('Thành viên leave:', member)
+    })
+    .listen('.room.status.changed', (data: any) => {
+      roomStatus.value = data.room.status
+      console.log('Trạng thái phòng thay đổi:', data.room.status)
+    })
+    .listenForWhisper('webrtc.signal', async (data: any) => {
+      if (data.to !== profile.user?.id) return
+
+      let pc = peerConnections[data.from]
+
+      if (!pc) {
+        pc = new RTCPeerConnection(rtcConfiguration)
+        peerConnections[data.from] = pc
+
+        if (localStream.value) {
+          localStream.value.getTracks().forEach((track) => {
+            pc.addTrack(track, localStream.value!)
+          })
+        }
+
+        pc.ontrack = (event) => {
+          if (event.streams && event.streams[0]) {
+            remoteStreams[data.from] = event.streams[0]
+          }
+        }
+
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            (channel as any).whisper('webrtc.signal', {
+              to: data.from,
+              from: profile.user?.id,
+              candidate: event.candidate
+            })
+          }
+        }
+      }
+
+      // --- Xử lý SDP ---
+      if (data.sdp) {
+        const remoteDesc = new RTCSessionDescription(data.sdp)
+
+        // Nếu SDP là answer và state không phù hợp, bỏ qua
+        if (remoteDesc.type === 'answer' && pc.signalingState !== 'have-local-offer') {
+          console.warn('Bỏ qua setRemoteDescription(answer) vì signalingState:', pc.signalingState)
+        } else {
+          // Tránh set lại SDP trùng
+          if (!pc.remoteDescription || pc.remoteDescription.sdp !== remoteDesc.sdp) {
+            try {
+              await pc.setRemoteDescription(remoteDesc)
+              if (remoteDesc.type === 'offer') {
+                const answer = await pc.createAnswer()
+                await pc.setLocalDescription(answer)
+                if (pc.localDescription) {
+                  (channel as any).whisper('webrtc.signal', {
+                    to: data.from,
+                    from: profile.user?.id,
+                    sdp: pc.localDescription
+                  })
+                }
+              }
+            } catch (error) {
+              console.error('Error handling SDP:', error)
+            }
+          }
+        }
+      }
+
+      // --- Xử lý ICE candidate ---
+      if (data.candidate) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate))
+        } catch (error) {
+          console.error('Error adding ICE candidate:', error)
+        }
+      }
+    })
+    .listenForWhisper('camera-state-changed', (data: any) => {
+      const user = users.value.find(u => u.id === data.userId)
+      if (user) {
+        user.isCameraOn = data.isCameraOn
+      }
+    })
+})
+
+onBeforeUnmount(() => {
+  echo.leave(`room.${roomId.value}`)
+
+  if (localStream.value) {
+    localStream.value.getTracks().forEach((track) => track.stop())
+  }
+
+  Object.values(peerConnections).forEach((pc) => pc.close())
+})
+
 </script>
 
 <template>
   <Box
     :style="{
-      padding: '150px 70px 60px'
+      padding: (!isMobile && !isTablet) ? '150px 70px 100px' : '50px 0px'
     }"
   >
-  <h2 :style="{ fontSize: '1.25rem', fontWeight: '500' }">
+  <h2 :style="{ fontSize: '1.25rem', fontWeight: '500' }" v-show="!isMobile && !isTablet">
     Bạn đang xem phim: {{ movie.title }}
   </h2>
-  <Flex justify="center" align="center" :style="{ width: '100%' }">
-    <Camera v-show="roomId"/>
-  </Flex>
+  <div >
+    <h2>Danh sách thành viên:</h2>
+    <TransitionGroup name="zoom" tag="div" :style="{ display: 'flex', gap: '16px' }">
+      <Flex v-for="user in users" :key="user.id" direction="column" gap="8px" justify="center" align="center">
+        <template v-if="user.id === profile.user?.id">
+          <Camera
+            v-if="myCameraOn"
+            :isCameraOn="myCameraOn"
+            @camera-state="(val) => (myCameraOn = val)"
+          />
+          <NuxtImg
+            v-else
+            src="https://storage.googleapis.com/a1aa/image/RaL_g8i84sWSjFMAMfTuN7RQGSJfvmFnuK7txbYprHs.jpg"
+            preload
+            format="webp"
+            width="360"
+            height="240"
+            draggable="false"
+            loading="lazy"
+            style="transition: transform 0.3s; transform: scale(1); object-fit: cover;"
+            @mouseover="$event.target.style.transform = 'scale(1.05)'"
+            @mouseleave="$event.target.style.transform = 'scale(1)'"
+          />
+        </template>
+          <template v-else>
+          <!-- Nếu có remote stream của user đó, hiển thị video -->
+          <video
+            v-if="remoteStreams[user.id]"
+            :ref="el => setRemoteVideo(el, user.id)"
+            autoplay
+            playsinline
+            width="360"
+            height="240"
+            style="object-fit: cover; transition: transform 0.3s;"
+          ></video>
+          <!-- Nếu chưa có remote stream, hiển thị avatar -->
+          <NuxtImg
+            v-else
+            src="https://storage.googleapis.com/a1aa/image/RaL_g8i84sWSjFMAMfTuN7RQGSJfvmFnuK7txbYprHs.jpg"
+            preload
+            format="webp"
+            width="360"
+            height="240"
+            draggable="false"
+            loading="lazy"
+            style="transition: transform 0.3s; transform: scale(1); object-fit: cover;"
+            @mouseover="$event.target.style.transform = 'scale(1.05)'"
+            @mouseleave="$event.target.style.transform = 'scale(1)'"
+          />
+        </template>
+        <Button @click="toggleCamera" v-if="user.id == profile.user?.id">
+          {{ myCameraOn ? "Tắt Camera" : "Bật Camera" }}
+        </Button>
+        <p>{{ user.name }}</p>
+      </Flex>
+    </TransitionGroup>
+  </div>
   <Flex gap="8px">  
-    <Box :style="{ width: '100%', height: '900px', position: 'relative', margin: '1rem 0' }">
-      <vue-plyr @pause="handlePause" :style="{ width: '100%', height: '100%', position: 'absolute' }">
+    <Box :style="{ width: '100%', height: (!isMobile && !isTablet) ? '900px' : '400px', position: 'relative', margin: '1rem 0' }">
+      <vue-plyr @pause="handlePause" :poster="movie.poster" :style="{ width: '100%', height: '100%', position: 'absolute', objectFit: 'cover' }">
         <video ref="videoPlayer" src="https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-1080p.mp4" data-poster="https://example.com/poster.jpg" controls playsinline width="100%">
           <p>Your browser does not support HTML5 video.</p>
         </video>
@@ -245,12 +578,12 @@ function watchTogether() {
     </Box>
     <ChatBox v-show="roomId"/>
   </Flex>
-  <Flex :style="{ width: '100%' }" justify="center">
+  <Flex :style="{ width: '100%' }" justify="center" :direction="isDesktop ? 'row' : 'column'">
     <Flex
       direction="column"
       gap="24px"
       :style="{ 
-        width: '1200px', 
+        width: (isDesktop || isLaptop) ? 'auto' : '100%', 
         maxWidth: '1200px',
         padding: '10px',
         borderRight: '1px solid #272932' 
@@ -259,6 +592,7 @@ function watchTogether() {
       <Flex
         gap="12px"
         :style="{ width: '100%', paddingBottom: '8px' }"
+        v-show="isDesktop"
       >
         <!-- Img box -->
         <Box 
@@ -345,14 +679,14 @@ function watchTogether() {
           </Flex>
         </Flex>
       </Flex>
-      <Divider/>
+      <Divider v-show="!isMobile && !isTablet"/>
       <Box :style="{ width: '100%' }">
-        <Flex align="center" :style="{ marginBottom: '1.5rem!important' }" gap="16px">
+        <Flex :align="(isDesktop || isLaptop) ? 'center' : 'flex-start'" :style="{ marginBottom: '1.5rem!important' }" gap="16px" :direction="(isDesktop || isLaptop) ? 'row' : 'column'">
           <Flex align="center" justify="center" gap="8px">
             <i class="pi pi-bars" style="padding-top: 4px"/>
             <h2 :style="{ fontSize: '1.25rem', fontWeight: 'bold' }">Danh sách tập</h2>
           </Flex>
-          <Divider layout="vertical"/>
+          <Divider layout="vertical" v-show="!isMobile && !isTablet"/>
           <Flex gap="20px">
             <Flex
               v-for="(item, index) in serverItems"
@@ -408,12 +742,12 @@ function watchTogether() {
               :replies="comment.replies"
               @update:isRefetch="isRefetchComments()"
             />
-            <h3 v-if="totalComments == 0">Chưa có bình luận, hãy bình luận nào!!!</h3>
+            <h3 v-if="totalComments == 0" :style="{ fontSize: isDesktop || isLaptop ? '18px' : '14px' }">Chưa có bình luận, hãy bình luận nào!!!</h3>
           </Flex>
         </Flex>
       </Box>
     </Flex>
-    <Box :style="{ width: '440px', maxWidth: '440px', padding: '1rem 2.5rem' }">
+    <Box :style="{ width: (isDesktop || isLaptop) ? 'auto' : '100%', maxWidth: isDesktop ? '440px' : 'none', minWidth: '440px', padding: isDesktop ? '1rem 2.5rem' : '1rem .5rem' }">
       <Box :style="{ width: '100%' }">
         <h2 :style="{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem!important' }">Diễn viên</h2>
         <Flex wrap="wrap" v-show="castList.length > 0">
@@ -485,5 +819,28 @@ function watchTogether() {
   font-weight: bold;
   border-radius: 8px;
   cursor: pointer;
+}
+
+.zoom-enter-active {
+  transition: transform 0.5s ease, opacity 0.5s ease;
+}
+.zoom-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.zoom-enter-from {
+  transform: scale(0);
+  opacity: 0;
+}
+.zoom-enter-to {
+  transform: scale(1);
+  opacity: 1;
+}
+.zoom-leave-from {
+  transform: scale(1);
+  opacity: 1;
+}
+.zoom-leave-to {
+  transform: scale(0);
+  opacity: 0;
 }
 </style>

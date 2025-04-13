@@ -50,7 +50,7 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
         :style="{
           opacity: activeEpisode == Number(episode) ? '1' : '.8',
           backgroundColor: activeEpisode == Number(episode) ? '#ffd875' : '#282b3a',
-          width: (isDesktop || isLaptop) ? '146px' : '110px',
+          width: (isDesktop || isLaptop) ? '146px' : '105px',
           height: '50px',
           borderRadius: '0.5rem',
           cursor: 'pointer',

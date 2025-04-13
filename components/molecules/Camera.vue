@@ -1,51 +1,63 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
+const props = defineProps<{
+  isCameraOn: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: 'camera-state', state: boolean): void;
+}>();
+
 // Ref để tham chiếu thẻ video
 const videoRef = ref<HTMLVideoElement | null>(null);
 
-// Biến trạng thái camera, mặc định là false (tắt)
-const isCameraOn = ref(false);
-
-// Hàm bật camera
 const openCamera = async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     if (videoRef.value) {
       videoRef.value.srcObject = stream;
-      isCameraOn.value = true; // Camera bật, hiển thị video
+      emit('camera-state', true);
     }
   } catch (error) {
     console.error("Lỗi khi truy cập camera: ", error);
   }
 };
 
-// Hàm tắt camera
 const closeCamera = () => {
   if (videoRef.value && videoRef.value.srcObject) {
     const stream = videoRef.value.srcObject as MediaStream;
     const tracks = stream.getTracks();
-    tracks.forEach((track) => track.stop()); // Dừng luồng video
+    tracks.forEach((track) => track.stop());
     videoRef.value.srcObject = null;
-    isCameraOn.value = false; // Camera tắt, ẩn video
+    emit('camera-state', false);
   }
-};
+}
 
-// Hàm chuyển đổi trạng thái camera
-const toggleCamera = () => {
-  if (isCameraOn.value) {
-    closeCamera();
-  } else {
-    openCamera();
-  }
-};
+watch(() => props.isCameraOn, (newVal) => {
+  newVal ? openCamera() : closeCamera();
+});
+
+onUnmounted(() => {
+  closeCamera();
+});
 </script>
 
 <template>
   <div>
-    <video v-show="isCameraOn" ref="videoRef" width="640" height="480" autoplay></video>
-    <Button @click="toggleCamera">
-      {{ isCameraOn ? "Tắt Camera" : "Bật Camera" }}
-    </Button>
+    <video v-if="isCameraOn" ref="videoRef" width="360" height="240" autoplay :style="{ objectFit: 'cover' }"></video>
+    <NuxtImg
+      v-else
+      src="https://storage.googleapis.com/a1aa/image/RaL_g8i84sWSjFMAMfTuN7RQGSJfvmFnuK7txbYprHs.jpg"
+      preload
+      format="webp"
+      :width="360"
+      :height="240"
+      draggable="false"
+      loading="lazy"
+      :style="{ transition: 'transform 0.3s', transform: 'scale(1)', objectFit: 'cover' }"
+      @mouseover="$event.target.style.transform = 'scale(1.05)'"
+      @mouseleave="$event.target.style.transform = 'scale(1)'"
+    />
   </div>
 </template>

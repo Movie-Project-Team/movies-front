@@ -14,12 +14,13 @@ const submit = () => {
 
 <template>
   <div>
-    <IftaLabel style="padding: 12px; background-color: #272932; border-radius: 8px; overflow: hidden;">
+    <IftaLabel style="padding: 12px; background-color: #272932; border-radius: 8px">
       <Textarea
         id="description"
         v-model="comment"
         rows="5"
-        style="width: 100%; resize: none; background-color: #191b24; border: none; color: #ffffff;"
+        autoResize
+        style="width: 100%;background-color: #191b24; border: none; color: #ffffff; overflow:hidden"
       />
       <label style="padding: 12px; font-weight: bold;" for="description">Viết bình luận</label>
       <Flex align="center" justify="flex-end">

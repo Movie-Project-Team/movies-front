@@ -267,7 +267,6 @@ const overlayStyle = computed(() => {
           :style="{
             height: '236px',
             maxHeight: '236px',
-            padding: '0px 0px 16px'
           }"
         >
           <NuxtImg

@@ -68,7 +68,14 @@ export default defineNuxtConfig({
         tmdb: 'https://api.themoviedb.org/3',
       },
       tmdbApiKey: process.env.TMDB_API_KEY,
-      imageTmdbDomain: 'https://image.tmdb.org/t/p/original'
+      imageTmdbDomain: 'https://image.tmdb.org/t/p/original',
+      PUSHER_APP_ID: process.env.NUXT_PUBLIC_PUSHER_APP_ID,
+      PUSHER_KEY: process.env.NUXT_PUBLIC_PUSHER_KEY,
+      PUSHER_SECRET: process.env.NUXT_PUBLIC_PUSHER_SECRET,
+      PUSHER_APP_CLUSTER: process.env.NUXT_PUBLIC_PUSHER_APP_CLUSTER,
+      PUSHER_HOST: process.env.NUXT_PUBLIC_PUSHER_HOST,
+      PUSHER_PORT: process.env.NUXT_PUBLIC_PUSHER_PORT,
+      PUSHER_SCHEME: process.env.NUXT_PUBLIC_PUSHER_SCHEME,
     }
   },
 })
