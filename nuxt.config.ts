@@ -80,6 +80,6 @@ export default defineNuxtConfig({
   },
   image: {
     domains: ['img.ophim.live'],
-    provider: 'ipx',
+    provider: 'netlify'
   }
 })
