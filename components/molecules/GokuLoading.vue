@@ -111,6 +111,8 @@ import Box from '../atoms/Box.vue';
   /* Chrome, Safari, Opera */
   transform: scale(0.5);
   z-index: 999999;
+  width: auto;
+  height: auto;
 }
 
 .shadow {

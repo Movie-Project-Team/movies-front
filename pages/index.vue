@@ -74,14 +74,14 @@ const shuffledSlides = computed(() => {
 </script>
 
 <template>
-  <main>
+  <Box>
     <div class="swiper-wrapper">
       <div class="swiper-wrapper__inner">
         <ClientOnly>
           <swiper-container ref="swiperCreativeRef" class="swiper-creative" :loop="true" :init="false" v-show="shuffledSlides.length > 0">
             <swiper-slide
               v-for="slide in shuffledSlides"
-              :key="`slide-creative-${slide.id}`"
+              :key="`main-slide-creative-${slide.id}`"
               class="swiper-slide"
             >
               <NuxtImg 
@@ -126,7 +126,7 @@ const shuffledSlides = computed(() => {
         <TopSlideSmall :data="data?.data ?? []"/>
       </SectionContainer>
     </Box>
-  </main>
+  </Box>
 </template>
 
 <style lang="css">

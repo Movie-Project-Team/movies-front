@@ -58,6 +58,7 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
         @mouseover="(e) => e.currentTarget.style.opacity = '0.7'"
         @mouseleave="(e) => e.currentTarget.style.opacity = '1'"
         v-else
+        class="fade-in"
       > 
         <Flex 
           align="center"
@@ -82,4 +83,20 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
   </Box>
 </template>
 
-<style scoped></style>
+<style scoped>
+@keyframes fadeInBlue {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+    
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fade-in {
+  animation: fadeInBlue .5s ease-in-out;
+}
+</style>

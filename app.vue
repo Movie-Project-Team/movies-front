@@ -17,7 +17,13 @@ const pageTitle = computed(() => {
 })
 
 useHead(() => ({
-  title: pageTitle.value
+  title: pageTitle.value,
+  link: [
+    {
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/icon?family=Material+Icons'
+    }
+  ]
 }))
 </script>
 

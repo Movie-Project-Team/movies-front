@@ -1,6 +1,5 @@
 // router.options.js
 import type { RouterConfig } from "nuxt/schema";
-import { getCookie } from "~/utils/cookie";
 
 export default <RouterConfig>{
   routes: (_routes) => [
@@ -42,8 +41,19 @@ export default <RouterConfig>{
         {
           name: 'xem-chung',
           path: 'xem-chung',
-          component: () => import('@/pages/movies/watch-together.vue'),
-          meta: { requiresAuth: true }
+          children: [
+            {
+              name: 'watch-together-list',
+              path: '',
+              component: () => import('~/pages/movies/watch-together.vue'),
+              meta: { requiresAuth: true }
+            },
+            {
+              name: 'watch-together-detail',
+              path: ':title',
+              component: () => import('@/pages/movies/watch-together-detail.vue'),
+            }
+          ],
         },
         {
           name: 'profile',
@@ -58,5 +68,5 @@ export default <RouterConfig>{
         },
       ]
     },
-  ],
+  ], 
 }

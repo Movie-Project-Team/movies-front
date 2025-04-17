@@ -15,8 +15,8 @@ const { data } = useGetListRanking(type);
 <template>
   <ClientOnly>
     <Flex direction="column" align="flex-start" justify="flex-start">
-      <Box v-for="(movie, index) in data?.data.slice(0, 5)" :key="index" :style="{ width: '100%', padding: '8px 0px' }">
-        <MovieCard :data="movie" :is-ver2="true" :pos="index + 1" :key="movie.id"/>
+      <Box v-for="(movie, index) in data?.data" :key="`ranking-${movie.id}`" :style="{ width: '100%', padding: '8px 0px' }">
+        <MovieCard :data="movie" :is-ver2="true" :pos="index + 1" />
       </Box>
     </Flex>
   </ClientOnly>

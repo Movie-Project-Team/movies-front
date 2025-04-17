@@ -29,7 +29,6 @@ export default defineNuxtPlugin((nuxtApp) => {
   
   const mobileControls = [
     'play-large',
-    'play',
     'progress',
     'current-time',
     'duration',

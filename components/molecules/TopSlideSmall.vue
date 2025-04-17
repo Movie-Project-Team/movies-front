@@ -75,7 +75,7 @@ useSwiper(thumbSwiper, {
       >
         <swiper-slide
           v-for="(slide, index) in shuffledSlides"
-          :key="`slide-creative-${slide.id}-${index}`"
+          :key="`slide-hot-creative-${slide.id}-${index}`"
           class="swiper-slide"
         >
           <NuxtImg
@@ -96,7 +96,7 @@ useSwiper(thumbSwiper, {
       >
         <swiper-slide
           v-for="(slide, index) in shuffledSlides"
-          :key="`slide-thumb-${slide.id}-${index}`"
+          :key="`slide-hot-thumb-${slide.id}-${index}`"
           class="swiper-slide-thumb"
         >
           <NuxtImg
@@ -132,7 +132,7 @@ main {
 
 .swiper-creative-main {
   width: 100%;
-  max-width: 1805px;
+  max-width: 1825px;
   height: 550px;
   border-radius: 32px;
   overflow: hidden;

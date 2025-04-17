@@ -10,6 +10,8 @@ import Box from "~/components/atoms/Box.vue";
 import Flex from "~/components/atoms/Flex.vue";
 import VerifyOtpModal from "./VerifyOtpModal.vue";
 import { useRegister } from "~/composables/api/auth/use-register";
+import SocialAuthButton from "~/components/atoms/SocialAuthButton.vue";
+import { useGoogleLogin } from "~/composables/api/auth/use-google-redirect";
 
 const props = defineProps<{
   visible: boolean;
@@ -107,19 +109,20 @@ const onSubmit = (data: any, closeCallback: Function) => {
       @hide="emit('update:visible', false)"
     >
       <template #container="{ closeCallback }">
-        <Flex direction="column" gap="20px">
+        <Flex direction="column" gap="16px">
           <Flex direction="column" gap="10px" align="center">
             <NuxtImg src="https://streamvid.jwsuperthemes.com/wp-content/uploads/2023/02/logo_sin.svg" alt="" :style="{ width: '40px', height: '40px' }" />
             <h5
               :style="{
                 color: '#00031C',
-                fontSize: '21px',
+                fontSize: '30px',
                 fontWeight: '700',
                 margin: '0px'
               }"
-            >{{ isLogin ? 'Chào mừng trở lại!' : 'Tạo tài khoản mới' }}</h5>
+            >{{ isLogin ? 'Chào mừng bạn!' : 'Tạo tài khoản mới' }}</h5>
+            <p :style="{ fontSize: '13px', textAlign: 'center' }">Hãy tiến hành Đăng nhập để sử dụng các chức năng của website hoặc Đăng ký và trở thành thành viên ngay hôm nay!</p>
           </Flex>
-          <Flex direction="column" gap="8px" v-if="isLogin">
+          <!-- <Flex direction="column" gap="8px" v-if="isLogin">
             <Button 
               label="Đăng nhập với Facebook" 
               icon="pi pi-facebook"
@@ -142,7 +145,7 @@ const onSubmit = (data: any, closeCallback: Function) => {
             <Box class="social-line">
               <span>or</span>
             </Box>
-          </Flex>
+          </Flex> -->
           <Form
             ref="formRef"
             v-slot="$form"
@@ -155,7 +158,8 @@ const onSubmit = (data: any, closeCallback: Function) => {
               gap: '8px'
             }"
           >
-              <Flex direction="column" gap="8px">
+              <Flex direction="column" gap="8px" :style="{ marginBottom: '12px' }">
+                <label for="email" :style="{ fontWeight: '700' }">Email: </label>
                 <InputText 
                   v-model="initialValues.email" 
                   name="email" 
@@ -171,7 +175,8 @@ const onSubmit = (data: any, closeCallback: Function) => {
                   {{ $form.email.error?.message }}
                 </Message>
               </Flex>
-              <Flex direction="column" gap="8px" v-if="!isLogin">
+              <Flex direction="column" gap="8px" :style="{ marginBottom: '12px' }" v-if="!isLogin">
+                <label for="username" :style="{ fontWeight: '700' }">Họ và tên: </label>
                 <InputText 
                   v-model="initialValues.username" 
                   name="username" 
@@ -188,6 +193,10 @@ const onSubmit = (data: any, closeCallback: Function) => {
                 </Message>
               </Flex>
               <Flex direction="column" gap="8px">
+                <Flex justify="space-between">
+                  <label for="password" :style="{ fontWeight: '700' }">Mật khẩu: </label>
+                  <NuxtLink v-if="isLogin" to="/forgot-password" :style="{ textDecoration: 'none', fontWeight: '700' }">Quên mật khẩu?</NuxtLink>
+                </Flex>
                 <Password 
                   v-model="initialValues.password"
                   :feedback="false"
@@ -211,18 +220,23 @@ const onSubmit = (data: any, closeCallback: Function) => {
                   <Checkbox binary inputId="ingredient1" name="pizza" value="remember"/>
                   <label for="ingredient1"> Ghi nhớ </label>
                 </Flex>
-                <NuxtLink v-if="isLogin" to="/forgot-password">Quên mật khẩu?</NuxtLink>
               </Flex>
-              <Button type="submit" :label="isLogin ? 'Đăng nhập' : 'Đăng ký'" :style="{ padding: '15px 31px' }"/>
-              <Box :style="{ marginTop: '10px', fontSize: '14px', textAlign: 'center', color: '#ddd' }">
-                <span>
-                {{ isLogin ? 'Chưa có tài khoản?' : 'Đã có tài khoản?' }}
-                <a href="#" @click.prevent="isLogin = !isLogin">
-                  {{ isLogin ? 'Đăng ký' : 'Đăng nhập' }}
+              <Button type="submit" :label="isLogin ? 'Đăng nhập' : 'Đăng ký'" :style="{ padding: '12px 31px' }"/>
+            </Form>
+            <Box class="social-line">
+              <span>or</span>
+            </Box>
+            <Flex gap="8px" v-if="isLogin">
+              <SocialAuthButton :style="{ width: '50%' }" v-for="(_, index) in 2" :key="`social-auth-${index}`"/>
+            </Flex>
+            <Box :style="{ marginTop: '10px', fontSize: '14px', textAlign: 'center', color: 'gray' }">
+              <span>
+                {{ isLogin ? 'Bạn chưa là thành viên?' : 'Đã là thành viên' }}
+                <a href="#" @click.prevent="isLogin = !isLogin" :style="{ textDecoration: 'none', fontWeight: '500' }">
+                  {{ isLogin ? 'Hãy đăng ký ngay hôm nay' : 'Đăng nhập' }}
                 </a>
               </span>
-              </Box>
-          </Form>
+            </Box>
         </Flex>
       </template>
     </Dialog>

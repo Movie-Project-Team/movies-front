@@ -98,7 +98,7 @@ const onCardMouseOver = () => {
     hoverTimer = setTimeout(() => {
       cardDelayed.value = true;
       hoverTimer = null;
-    }, 500);
+    }, 800);
   }
   if (cardRef.value) {
     const bounds = useElementBounding(cardRef);
@@ -207,6 +207,7 @@ const overlayStyle = computed(() => {
             width: isMobile ? '104px' : (isVer2 ? '25px' : '221px'),
             borderRadius: isVer2 ? '0px' : '8px',
             minHeight: isMobile ? '104px' : (isVer2 ? '0px' : '330px'),
+            maxHeight: isMobile ? '104px' : (isVer2 ? '40px' : '330px'),
           }"
           sizes="(max-width: 600px) 100px, (max-width: 1200px) 200px, 221px" 
           :placeholder="[50, 25, 75, 5]"
@@ -254,9 +255,8 @@ const overlayStyle = computed(() => {
 
     <!-- Overlay tiêu đề lớn xuất hiện khi hover -->
     <teleport to="body">
-      <Flex 
-        v-if="isMovie(data)"
-        v-show="(showLargeTitle && (isDesktop || isLaptop) && !isVer2)" 
+      <Flex
+        v-if="(isMovie(data) && showLargeTitle && (isDesktop || isLaptop) && !isVer2)" 
         class="overlay-title animate-scale"
         :style="overlayStyle"
         direction="column"
@@ -267,6 +267,7 @@ const overlayStyle = computed(() => {
           :style="{
             height: '236px',
             maxHeight: '236px',
+            padding: '0px 0px 16px'
           }"
         >
           <NuxtImg
@@ -295,7 +296,7 @@ const overlayStyle = computed(() => {
           </Flex>
           <Flex gap="8px">
             <Button label="Xem phim" icon="pi pi-play" @click="goToDetail" :style="{ fontSize: '13px' }"/>
-            <Button label="Yêu thích" icon="pi pi-heart" :style="{ background: 'none', border: '1px solid #ffffff', fontSize: '13px' }" />
+            <Button label="Yêu thích" icon="pi pi-heart" :style="{ backgroundColor: '#dc2626', border: 'none', fontSize: '13px' }" />
             <Button label="Xem sau" icon="pi pi-bookmark" :style="{ background: 'none', border: '1px solid #ffffff', fontSize: '13px' }" />
           </Flex>
           <Flex direction="column" gap="16px">
@@ -348,5 +349,21 @@ const overlayStyle = computed(() => {
 
 .animate-scale-leave {
   animation: scaleDown 0.5s forwards;
+}
+
+@keyframes fadeInBlue {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+    
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.movie-card {
+  animation: fadeInBlue .5s ease-in-out;
 }
 </style>

@@ -67,11 +67,11 @@ useSwiper(swiperCreativeRef, {
     >
       <swiper-slide
         v-for="movie in data"
-        :key="`slide-creative-${movie.id}`"
+        :key="`list-slide-creative-${movie.id}`"
         class="swiper-slide"
         :style="{ width: '221px!important' }"
       >
-        <MovieCard :data="movie" />
+        <MovieCard :data="movie"/>
       </swiper-slide>
     </swiper-container>
   </ClientOnly>

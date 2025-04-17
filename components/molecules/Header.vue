@@ -79,7 +79,6 @@ onMounted(() => {
   const loginModalFlag = route.query.openLoginModal;
   if (loginModalFlag) {
     isOpenModal.value = true;
-
     router.replace({
       path: route.path,
       query: {

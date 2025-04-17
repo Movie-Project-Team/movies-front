@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Box from '../atoms/Box.vue';
 import Flex from '../atoms/Flex.vue';
-import PasswordRoomModal from '@/components/molecules/modal/PasswordRoomModal.vue';
+import PasswordRoomModal from './modal/PasswordRoomModal.vue';
 
 const props = defineProps<{
   data: RoomResponse;
@@ -50,12 +50,29 @@ watch(() => props.isLoading, (newValue) => {
   loadingState.value = newValue;
 });
 
-const isOpenPasswordModal = ref(false);
-const handleOpenPasswordModal = () => {
-  if (props.data.is_locked) {
+const isOpenPasswordModal = ref(false)
+const router = useRouter();
+
+const emit = defineEmits(['confirmOpenRoom'])
+const handleClickRoom = () => {
+  if (props.data.is_locked && props.data.status === 0) {
     isOpenPasswordModal.value = true;
+    return;
   }
+
+  if (props.data.status === 1) {
+    emit('confirmOpenRoom', props.data)
+    return;
+  }
+
+  router.push({
+    path: `/xem-chung/${props.data.movie.slug}`,
+    query: {
+      room: props.data.room_code
+    }
+  });
 }
+
 </script>
 
 <template>
@@ -70,7 +87,8 @@ const handleOpenPasswordModal = () => {
         height: '400px',
         borderRadius: '8px',
         background: '#2f3346',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
       }"
       @mouseover="(e: any) => {
         e.currentTarget.style.opacity = '0.7';
@@ -81,7 +99,7 @@ const handleOpenPasswordModal = () => {
         e.currentTarget.style.opacity = '1';
         e.currentTarget.style.transform = 'scale(1)';
       }"
-      @click="handleOpenPasswordModal"
+      @click="handleClickRoom"
     >
       <Flex
         direction="column"

@@ -29,6 +29,7 @@ const formatData = (response, type) => {
 
 const languageData = computed(() => formatData(languageResponse, 'lang'));
 const genresData = computed(() => formatData(genresResponse, 'gen'));
+const emit = defineEmits(['openAuthModal']);
 
 const items = ref([
   {
@@ -68,8 +69,6 @@ const items = ref([
     },
   },
 ]);
-
-const emit = defineEmits(['openAuthModal']);
 </script>
 
 <template>

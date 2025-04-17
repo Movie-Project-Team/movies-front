@@ -15,10 +15,13 @@ export const useGetHistory = (
   profileId: Ref<number> = ref(0),
   movieId: Ref<number> = ref(0),
 ) => {
+  const isValidId = (val: unknown) => typeof val === 'number' && Number.isFinite(val) && val > 0;
+
   const query = useQuery({
     queryKey: ['history-detail', profileId.value, movieId.value],
     queryFn: () => fetchData(profileId.value, movieId.value),
     placeholderData: keepPreviousData,
+    enabled: computed(() =>isValidId(profileId.value) && isValidId(movieId.value)),
   });
 
   return {

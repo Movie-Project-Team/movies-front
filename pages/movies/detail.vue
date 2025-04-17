@@ -127,10 +127,11 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
             textShadow: '2px 2px 5px rgba(255, 215, 0, 0.5)',
             margin: '12px 0px !important',
           }"
+          class="fade-in"
         >
         {{ movie?.title ?? 'Chưa có tiêu đề' }}
         </h1>
-        <Flex direction="column" :gap="(!isMobile && !isTablet) ? '12px' : '40px'">
+        <Flex direction="column" :gap="(!isMobile && !isTablet) ? '12px' : '40px'" class="fade-in">
           <Flex
             gap="10px"
             :style="{
@@ -154,6 +155,7 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
             }"
             :wrap="(!isMobile && !isTablet) ? 'nowrap' : 'wrap'"
             :justify="(!isMobile && !isTablet) ? 'flex-start' : 'center'"
+            class="fade-in"
           >
             <Tag
               v-for="(genre, index) in genreItems"
@@ -163,7 +165,7 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
             />
           </Flex>
         </Flex>
-        <Flex direction="column" gap="10px" v-show="(!isMobile && !isTablet)"> 
+        <Flex direction="column" gap="10px" v-show="(!isMobile && !isTablet)" class="fade-in"> 
           <Flex :style="{ margin: '4px 0px!important' }" gap="8px">
             <span :style="{ fontWeight: '700' }">Đạo diễn: </span>
             <Skeleton width="80%" height="25px" v-show="!data?.data" />
@@ -174,7 +176,7 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
             Taito Ban, Genta Nakamura, Haruna Mikawa
           </p>
         </Flex>
-        <Box v-show="(!isMobile && !isTablet)">
+        <Box v-show="(!isMobile && !isTablet)" class="fade-in">
           <p :style="{ margin: '4px 0px!important', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: '4', overflow: 'hidden' }">
             <span :style="{ fontWeight: '700' }">Giới thiệu: </span>
             <Skeleton width="100%" height="40px" v-show="!data?.data" />
@@ -258,7 +260,7 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
               maskImage: (isMobile || isTablet) ? 'linear-gradient(360deg, transparent 0, #000 50%, #000 50%, transparent)' : 'none',
               WebkitMaskImage: (isMobile || isTablet) ? 'linear-gradient(360deg, transparent 0, #000 50%, #000 50%, transparent)' : 'none',
               opacity: (isMobile || isTablet) ? '.1' : '1'
-            }" 
+            }"
           />
         </Box>
       </Flex>
@@ -272,4 +274,19 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 </template>
 
 <style scoped>
+@keyframes fadeInBlue {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+    
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fade-in {
+  animation: fadeInBlue .5s ease-in-out;
+}
 </style>
