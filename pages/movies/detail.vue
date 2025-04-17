@@ -112,8 +112,6 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
             borderRadius: '8px',
             minHeight: '165px',
           }"
-          sizes="(max-width: 600px) 100px, (max-width: 1200px) 200px, 221px" 
-          :placeholder="[50, 25, 75, 5]"
           @mouseover="(e: any) => e.currentTarget.style.opacity = '0.7'"
           @mouseleave="(e: any) => e.currentTarget.style.opacity = '1'"
         />
