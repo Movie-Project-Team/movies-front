@@ -209,8 +209,6 @@ const overlayStyle = computed(() => {
             minHeight: isMobile ? '104px' : (isVer2 ? '0px' : '330px'),
             maxHeight: isMobile ? 'none' : (isVer2 ? '40px' : '330px'),
           }"
-          sizes="(max-width: 600px) 100px, (max-width: 1200px) 200px, 221px" 
-          :placeholder="[50, 25, 75, 5]"
           @mouseover="(e: any) => e.currentTarget.style.opacity = '0.7'"
           @mouseleave="(e: any) => e.currentTarget.style.opacity = '1'"
         />
