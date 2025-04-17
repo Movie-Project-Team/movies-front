@@ -207,7 +207,7 @@ const overlayStyle = computed(() => {
             width: isMobile ? '104px' : (isVer2 ? '25px' : '221px'),
             borderRadius: isVer2 ? '0px' : '8px',
             minHeight: isMobile ? '104px' : (isVer2 ? '0px' : '330px'),
-            maxHeight: isMobile ? '104px' : (isVer2 ? '40px' : '330px'),
+            maxHeight: isMobile ? 'none' : (isVer2 ? '40px' : '330px'),
           }"
           sizes="(max-width: 600px) 100px, (max-width: 1200px) 200px, 221px" 
           :placeholder="[50, 25, 75, 5]"
