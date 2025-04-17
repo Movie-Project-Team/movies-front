@@ -87,7 +87,7 @@ const shuffledSlides = computed(() => {
               <NuxtImg 
                 :src="slide.poster"
                 :alt="slide.poster"
-                style="width: 100%; height: calc(100vh - 40px); object-fit: cover;" 
+                :style="{ width: '100%', height: isMobile ? '100%' : 'calc(100vh - 40px)', objectFit: 'cover' }" 
                 loading="lazy"
               />
               <SlideItem :data="slide" />
