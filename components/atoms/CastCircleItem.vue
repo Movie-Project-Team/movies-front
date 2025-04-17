@@ -20,14 +20,16 @@ const config = useRuntimeConfig();
     gap: '1.5rem',
     flexWrap: 'wrap',
     marginBottom: '12px',
-    marginRight: '10px'
+    marginRight: '10px',
   }"
 >
   <NuxtLink
     :style="{
       flex: '1',
       cursor: 'pointer',
-      maxWidth: '104px'
+      width: '104px',
+      maxWidth: '104px!important',
+      minHeight: '130px'
     }"
   >
     <Avatar :image="data.profile_path ? `${config.public.imageTmdbDomain}/${data.profile_path}` : 'https://s3.amazonaws.com/37assets/svn/765-default-avatar.png'" size="large" shape="circle" :style="{ width: '5rem', height: '5rem' }" />

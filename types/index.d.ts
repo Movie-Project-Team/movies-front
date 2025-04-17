@@ -2,6 +2,7 @@ type Route = {
   path: string;
   title?: string;
   isPublic?: boolean;
+  requiresDefaultPageQuery?: boolean;
 };
 
 type Routes = {
@@ -18,6 +19,8 @@ type Movie = {
   thumbnail?: string;
   produce_by?: string,
   tmdb_id?: number,
+  time?: string,
+  lang?: string,
   type?: string,
   season?: number,
   vote_average?: number,
@@ -167,4 +170,75 @@ type CommentListResponse = {
   code: number,
   message: string,
   data: CommentResponse[],
+}
+
+type NotificationItem = {
+  id: number,
+  type: number,
+  title: string,
+  message: string,
+  link?: string,
+  time: string
+};
+
+type NotificationResponse = {
+  code: number,
+  message: string,
+  data: NotificationItem[],
+}
+
+type WatchHistory = {
+  id: number,
+  profile: Profile,
+  movie: Movie,
+  timeProcess: number,
+  episode: number,
+  lastWatchedAt: string
+}
+
+type WatchHistoryDetailResponse = {
+  code: number,
+  message: string,
+  data: WatchHistory,
+}
+
+type WatchHistoryResponse = {
+  code: number,
+  message: string,
+  data: WatchHistory[],
+}
+
+type tvTMDB = {
+  id: number,
+  name: string,
+  media_type: string
+}
+
+type tvTMDBResponse = {
+  tv_results: tvTMDB[],
+  movie_results: tvTMDB
+}
+
+type RoomResponse = {
+  id: number,
+  room_code: string,
+  name: string,
+  is_locked: Boolean,
+  capacity: number,
+  status: number,
+  host: Profile,
+  movie: Movie,
+  created_at: Datetime,
+}
+
+type RoomListResponse = {
+  code: number,
+  message: string,
+  data: RoomResponse[],
+}
+
+type RoomDetailResponse = {
+  code: number,
+  message: string,
+  data: RoomResponse,
 }

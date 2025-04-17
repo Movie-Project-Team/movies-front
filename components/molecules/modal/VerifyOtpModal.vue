@@ -65,7 +65,7 @@ const resolver = ref(
 const router = useRouter();
 
 const reloadPage = () => {
-  router.go(0); // Reload trang
+  router.go(0);
 };
 </script>
 

@@ -60,15 +60,18 @@ const tagClass = computed(() => {
 }
 
 .tag-container-classic {
-  background-color: #ffffff10;
-  height: 26px;
-  padding: 0 .4rem;
-  color: #fff;
-  display: inline-flex;
-  border: 1px solid #fff;
+  background-color: transparent;
+  border: 1px solid #ffffff;
   border-radius: .33rem;
-  align-items: center;
+  color: #fff;
+  font-weight: 500;
+  cursor: default;
+  line-height: 24px;
   font-size: 12px;
+  padding: 0 .4rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
 }
 
 .tag-container-topic {
@@ -76,7 +79,9 @@ const tagClass = computed(() => {
   height: 26px;
   padding: 0 .4rem;
   color: #fff;
+  flex-shrink: 0;
   display: inline-flex;
+  align-items: center;
   border-radius: .33rem;
   align-items: center;
   font-size: 12px;

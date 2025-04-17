@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import useResponsive from '~/composables/resize/use-responsive';
 import Box from '../atoms/Box.vue';
 import Flex from '../atoms/Flex.vue';
 
@@ -28,6 +29,8 @@ const handleEpisodeChange = (episode: number) => {
     query: { server: "vietsub", ep: episode },
   });
 };
+
+const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 </script>
 
 <template>
@@ -36,7 +39,8 @@ const handleEpisodeChange = (episode: number) => {
       gap="10px"
       wrap="wrap"
     >
-      <p style="color: white; font-size: 1rem;" v-if="episodeList.length === 0">Đang cập nhật</p>
+      <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="8" fill="transparent"
+      v-if="episodeList.length === 0" animationDuration=".5s" aria-label="Custom ProgressSpinner" />
       <Flex
         v-for="(episode, index) in episodeList"
         justify="center"
@@ -46,7 +50,7 @@ const handleEpisodeChange = (episode: number) => {
         :style="{
           opacity: activeEpisode == Number(episode) ? '1' : '.8',
           backgroundColor: activeEpisode == Number(episode) ? '#ffd875' : '#282b3a',
-          width: '146px',
+          width: (isDesktop || isLaptop) ? '146px' : '105px',
           height: '50px',
           borderRadius: '0.5rem',
           cursor: 'pointer',
@@ -54,6 +58,7 @@ const handleEpisodeChange = (episode: number) => {
         @mouseover="(e) => e.currentTarget.style.opacity = '0.7'"
         @mouseleave="(e) => e.currentTarget.style.opacity = '1'"
         v-else
+        class="fade-in"
       > 
         <Flex 
           align="center"
@@ -78,4 +83,20 @@ const handleEpisodeChange = (episode: number) => {
   </Box>
 </template>
 
-<style scoped></style>
+<style scoped>
+@keyframes fadeInBlue {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+    
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fade-in {
+  animation: fadeInBlue .5s ease-in-out;
+}
+</style>

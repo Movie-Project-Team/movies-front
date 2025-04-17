@@ -2,7 +2,7 @@
 import MovieCard from '../atoms/MovieCard.vue';
 import { useSwiper } from '#imports'
 import { ref } from 'vue'
-import SkeletonContainer from '@/components/molecules/SkeletonContainer.vue';
+import SkeletonContainer from './SkeletonContainer.vue';
 
 const props = defineProps<{
   data: Movie[];
@@ -20,14 +20,19 @@ useSwiper(swiperCreativeRef, {
   slidesPerView: 8,
   spaceBetween: '20',
   breakpoints: {
-    '500': {
-      slidesPerView: 2,
+    '100': {
+      slidesPerView: 3,
       spaceBetween: 20,
     },
-    '768': {
-      slidesPerView: 3,
+    '600': {
+      slidesPerView: 4,
+      spaceBetween: 20,
     },
-    '1200': {
+    '765': {
+      slidesPerView: 3,
+      spaceBetween: 20,
+    },
+    '1110': {
       slidesPerView: 5,
       spaceBetween: 20,
     },
@@ -62,11 +67,11 @@ useSwiper(swiperCreativeRef, {
     >
       <swiper-slide
         v-for="movie in data"
-        :key="`slide-creative-${movie.id}`"
+        :key="`list-slide-creative-${movie.id}`"
         class="swiper-slide"
         :style="{ width: '221px!important' }"
       >
-        <MovieCard :data="movie" />
+        <MovieCard :data="movie"/>
       </swiper-slide>
     </swiper-container>
   </ClientOnly>

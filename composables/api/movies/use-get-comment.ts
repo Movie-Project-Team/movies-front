@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery } from "@tanstack/vue-query";
 import { apiReClient } from "@/utils/apiReClient";
 
 const ENDPOINT = 'comment';
-const fetchData = async (movieId: string): Promise<CommentListResponse> => {
+const fetchData = async (movieId: number): Promise<CommentListResponse> => {
   const api = apiReClient();
   const response = await api<CommentListResponse>(`/${ENDPOINT}/${movieId}`, {
     method: 'GET',
@@ -12,7 +12,7 @@ const fetchData = async (movieId: string): Promise<CommentListResponse> => {
 };
 
 export const useGetComment = (
-  movieId: Ref<string> = ref(""),
+  movieId: Ref<number> = ref(0),
 ) => {
   const query = useQuery({
     queryKey: ['comment-list', movieId.value],

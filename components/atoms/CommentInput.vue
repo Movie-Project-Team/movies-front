@@ -19,8 +19,8 @@ const submit = () => {
         id="description"
         v-model="comment"
         rows="5"
-        cols="148"
-        style="resize: none; background-color: #191b24; border: none; color: #ffffff; overflow:hidden"
+        autoResize
+        style="width: 100%;background-color: #191b24; border: none; color: #ffffff; overflow:hidden"
       />
       <label style="padding: 12px; font-weight: bold;" for="description">Viết bình luận</label>
       <Flex align="center" justify="flex-end">

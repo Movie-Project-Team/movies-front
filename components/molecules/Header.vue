@@ -1,17 +1,33 @@
 <script setup lang="ts">
-import { IconField, InputIcon, Menu, OverlayBadge, Toolbar } from "primevue";
+import { IconField, InputIcon, Menu, OverlayBadge, Popover, Toolbar } from "primevue";
 import Flex from "../atoms/Flex.vue";
+import Box from "../atoms/Box.vue";
 import MenuSideBar from "./MenuSideBar.vue";
 import AuthModal from "./modal/AuthModal.vue";
 import MultiProfileModal from "@/components/molecules/modal/MultiProfileModal.vue";
 import { getCookie } from "~/utils/cookie";
 import { logout } from "~/utils";
 import { useGetListMovie } from "~/composables/api/movies/use-get-list-movie";
+import NoticationItem from "../atoms/NoticationItem.vue";
+import { useGetListNotification } from "~/composables/api/notification/use-get-list-notification";
+import useResponsive from "~/composables/resize/use-responsive";
 
 const isOpenModal = ref(false);
 const isLoginSuccess = ref(false);
+const isSearchVisible = ref(false);
 const cookieAuth = getCookie("access_token");
 const profileStore = useProfileStore();
+const notificationRef = ref();
+const router = useRouter();
+const route = useRoute();
+
+const toggleSearch = () => {
+  isSearchVisible.value = !isSearchVisible.value;
+};
+
+const openAuthModal = () => {
+  isOpenModal.value = true;
+};
 
 const handleLoginSuccess = (isSuccess: boolean) => {
   isLoginSuccess.value = isSuccess;
@@ -55,6 +71,24 @@ const toggle = (event: any) => {
   menu.value.toggle(event);
 };
 
+const toggleNotification = (event: any) => {
+  notificationRef.value.toggle(event);
+};
+
+onMounted(() => {
+  const loginModalFlag = route.query.openLoginModal;
+  if (loginModalFlag) {
+    isOpenModal.value = true;
+    router.replace({
+      path: route.path,
+      query: {
+        ...route.query,
+        openLoginModal: undefined,
+      },
+    });
+  }
+});
+
 const searchQuery = ref("");
 const suggestions = ref<Movie[]>([]);
 const params = ref({
@@ -81,6 +115,24 @@ const clearInput = () => {
   params.value.keyword = "";
   refetch();
 };
+
+const goToSearchPage = () => {
+  if (searchQuery.value.trim()) {
+    router.push({
+      path: "/tim-kiem",
+      query: { 
+        page: 1, 
+        keyword: searchQuery.value.trim() 
+      }
+    });
+  }
+};
+
+const profileId = ref<number>(Number(profileStore.user?.id));
+const { data: notifications } = useGetListNotification(profileId)
+
+// responsive
+const { isLaptop, isDesktop } = useResponsive();
 </script>
 
 <template>
@@ -89,27 +141,35 @@ const clearInput = () => {
       border: '0px',
       width: '100%',
       borderRadius: '0px',
-      height: '90px',
-      padding: '0px 70px',
-      background: 'none',
+      height: isDesktop ? '90px' : '',
+      padding: isDesktop ? '0px 70px' : '0px 20px',
+      background: isDesktop ? 'none' : '#191b24',
       fontWeight: '600',
     }"
   >
     <template #start>
-      <Flex>
+      <Flex :direction="(isDesktop || isLaptop) ? 'row' : 'row-reverse'" :style="{ visibility: isSearchVisible ? 'hidden' : 'visible' }">
         <img
           src="https://streamvid.jwsuperthemes.com/wp-content/uploads/2023/02/logo.svg"
           alt=""
+          :style="{
+            width: !isDesktop ? '120px' : '200px',
+          }"
+          @click="router.push('/')"
         />
-        <MenuSideBar />
+        <MenuSideBar @openAuthModal="openAuthModal"/>
       </Flex>
     </template>
     <template #end>
       <Flex gap="24px" align="center">
         <IconField
           :style="{
-            position: 'relative',
+            position: !isDesktop ? 'absolute' : 'relative',
+            width: !isDesktop ? '70%!important' : 'auto!important',
+            top: '0',
+            left: '0',
           }"
+          v-if="isSearchVisible || isDesktop"
         >
           <InputIcon>
             <i class="pi pi-search"></i>
@@ -120,6 +180,8 @@ const clearInput = () => {
             @complete="search"
             placeholder="Tìm kiếm phim, diễn viên"
             @item-select="clearInput"
+            @keyup.enter="goToSearchPage"
+            :style="{ width: 'calc(100% + 60px)' }"
           >
             <template #option="slotProps">
               <NuxtLink :to="`/phim/${slotProps.option.slug}`" style="text-decoration: none; color: inherit;">
@@ -168,9 +230,26 @@ const clearInput = () => {
             </template>
           </AutoComplete>
         </IconField>
-        <OverlayBadge value="4" severity="danger">
-          <Avatar icon="pi pi-bell" size="normal" />
-        </OverlayBadge>
+        <template v-if="!isDesktop">
+          <i :class="!isSearchVisible ? 'pi pi-search' : 'pi pi-times'" style="cursor: pointer" @click="toggleSearch"></i>
+        </template>
+        <Box v-show="isDesktop">
+          <OverlayBadge :value="notifications?.data.length" v-if="profileStore.isVerify && cookieAuth && (notifications?.data && notifications?.data.length > 0)" severity="danger" @click="toggleNotification">
+            <Avatar icon="pi pi-bell" size="normal" />
+          </OverlayBadge>
+          <Avatar icon="pi pi-bell" size="normal" v-else @click="toggleNotification"/>
+          <Popover ref="notificationRef">
+            <Flex :style="{
+              maxWidth: '350px',
+              width: '350px',
+            }" direction="column">
+              <NoticationItem 
+                v-for="item in notifications?.data ?? []"
+                :notification="item" 
+              />
+            </Flex>
+          </Popover>
+        </Box>
         <Flex v-if="profileStore.isVerify && cookieAuth">
           <Avatar
             shape="circle"
@@ -191,14 +270,22 @@ const clearInput = () => {
             }"
           />
         </Flex>
-        <Button
-          label="Đăng nhập"
-          icon="pi pi-user"
-          :style="{ padding: '10px' }"
-          raised
-          @click="isOpenModal = true"
-          v-else
-        />
+        <div v-else>
+          <Button
+            v-if="isDesktop"
+            label="Đăng nhập"
+            icon="pi pi-user"
+            :style="{ padding: '10px' }"
+            raised
+            @click="isOpenModal = true"
+          />
+          <i
+            v-else-if="isLaptop"
+            class="pi pi-user"
+            :style="{ padding: '10px', cursor: 'pointer' }"
+            @click="isOpenModal = true"
+          />
+        </div>
       </Flex>
       <AuthModal
         :visible="isOpenModal"
@@ -214,4 +301,5 @@ const clearInput = () => {
   </Toolbar>
 </template>
 
-<style scoped></style>
+<style scoped>
+</style>

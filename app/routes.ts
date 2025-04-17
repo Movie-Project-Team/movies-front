@@ -23,10 +23,17 @@ export const routes: Routes = {
     path: '/tim-kiem',
     title: 'Tìm kiếm',
     isPublic: true,
+    requiresDefaultPageQuery: true,
   },
   SAP_CHIEU: {
     path: '/sap-chieu',
     title: 'Phim sắp chiếu',
     isPublic: true,
+  },
+  XEM_CHUNG: {
+    path: '/xem-chung',
+    title: 'Xem Chung',
+    isPublic: true,
+    requiresDefaultPageQuery: true,
   },
 };

@@ -13,7 +13,7 @@ const router = useRouter();
 const params = ref({
   item: 21,
   page: Number(route.query.page) || 1,
-  keyword: '',
+  keyword: route.query.keyword ? String(route.query.keyword).trim() : '',
 });
 const currentPage = ref(Number(route.query.page) || 1);
 const { data, refetch, isLoading } = useGetListMovie(params);
@@ -23,12 +23,20 @@ const totalPages = computed(() => data.value?.paginate.totalPages ?? 1);
 const localLoading = ref(false);
 const skeletonLoading = computed(() => localLoading.value || isLoading.value);
 
-watch(() => route.query.page, (newPage) => {
-  const pageNumber = Number(newPage) || 1;
-  params.value.page = pageNumber;
-  currentPage.value = pageNumber;
-  refetch();
-});
+watch(
+  () => route.query,
+  (newQuery) => {
+    const pageNumber = Number(newQuery.page) || 1;
+    const searchKeyword = newQuery.keyword ? String(newQuery.keyword).trim() : '';
+
+    params.value.page = pageNumber;
+    params.value.keyword = searchKeyword;
+    currentPage.value = pageNumber;
+
+    refetch();
+  },
+  { immediate: true }
+);
 
 const setLoading = () => {
   loading.show();
@@ -48,6 +56,10 @@ const changePage = async (page: number) => {
   setLoading();
   await refetch();
   setTimeout(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
     localLoading.value = false;
   }, 500);
 };

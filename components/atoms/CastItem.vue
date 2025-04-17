@@ -1,20 +1,26 @@
 <script setup lang="ts">
-import Box from './Box.vue';
+import useResponsive from '~/composables/resize/use-responsive';
 import Flex from './Flex.vue';
 
+const props = defineProps<{
+  data: CastTmdb;
+}>();
+
+const config = useRuntimeConfig();
+const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 </script>
 
 <template>
   <Flex
     :style="{
-      width: '160px',
+      width: (isLaptop || isDesktop) ? '160px' : '120px',
       height: '230px',
       marginBottom: '14px'
     }"
     direction="column"
   >
     <NuxtImg 
-      src="https://image.tmdb.org/t/p/w500/nsrFjmDDzo4FDMhxyvuVk4mPEH3.jpg" 
+      :src="`${config.public.imageTmdbDomain}/${data.profile_path}`" 
       alt="" 
       :style="{ 
         objectFit: 'cover', 
@@ -24,8 +30,8 @@ import Flex from './Flex.vue';
         borderRadius: '8px',
       }" />
     <Flex direction="column" align="center" :style="{ color: '#ffffff', marginTop: '-40px', zIndex: '100', fontSize: '14px' }">
-      <span :style="{ lineHeight: '30px' }">Taito Ban</span>
-      <span>Shun Mizushino (voice)</span>
+      <span :style="{ lineHeight: '30px' }">{{ data.name }}</span>
+      <span>{{ data.character }}</span>
     </Flex>
   </Flex>
 </template>

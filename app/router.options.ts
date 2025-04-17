@@ -38,6 +38,34 @@ export default <RouterConfig>{
           path: 'sap-chieu',
           component: () => import('~/pages/movies/upcoming.vue'),
         },
+        {
+          name: 'xem-chung',
+          path: 'xem-chung',
+          children: [
+            {
+              name: 'watch-together-list',
+              path: '',
+              component: () => import('~/pages/movies/watch-together.vue'),
+              meta: { requiresAuth: true }
+            },
+            {
+              name: 'watch-together-detail',
+              path: ':title',
+              component: () => import('@/pages/movies/watch-together-detail.vue'),
+            }
+          ],
+        },
+        {
+          name: 'profile',
+          path: 'profile',
+          children: [
+            {
+              name: 'profile-information',
+              path: '',
+              component: () => import('@/pages/profiles/infomation.vue'),
+            }
+          ]
+        },
       ]
     },
   ], 

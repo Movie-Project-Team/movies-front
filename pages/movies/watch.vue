@@ -9,8 +9,13 @@ import EpisodeList from '~/components/molecules/EpisodeList.vue';
 import { useComment } from '~/composables/api/movies/use-create-comment';
 import { useGetComment } from '~/composables/api/movies/use-get-comment';
 import { useGetListCredit } from '~/composables/api/movies/use-get-list-credit';
-import { MovieService } from '~/services/DummnyDataMovie';
 import { useGetMovie } from '~/composables/api/movies/use-get-movie';
+import { useSaveHistory } from '~/composables/api/movies/use-save-history';
+import { useGetHistory } from '~/composables/api/movies/use-get-history';
+import { useGetMovieById } from '~/composables/api/movies/use-get-by-id';
+import { useGetListRecommend } from '~/composables/api/movies/use-get-list-recommend';
+import ChatBox from '~/components/molecules/ChatBox.vue';
+import useResponsive from '~/composables/resize/use-responsive';
 
 const tagItems = computed(() => [
   { content: movie.value.vote_average ?? "N/A", subContent: "IMBd", type: "imdb" },
@@ -53,14 +58,7 @@ const { data, isLoading: isLoadingDetailMovie } = useGetMovie(slug);
 const movie = computed<Movie>(() => data.value?.data ?? ({} as Movie));
 
 const movieId = computed(() => {
-  return movie?.value?.id?.toString() || "";
-});
-
-const plainDescription = computed(() => {
-  return (movie.value.description || '')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .trim();
+  return movie?.value?.id || 0;
 });
 
 watchEffect(() => {
@@ -99,7 +97,7 @@ const submitComment = (comment: string) => {
   mutate(
     {
       movieId: Number(movieId.value),
-      userId: Number(profile.user?.user_id),
+      profileId: Number(profile.user?.id),
       isApproved: 1,
       content: comment,
     },
@@ -115,13 +113,8 @@ const submitComment = (comment: string) => {
   );
 };
 
-const suggestMovie = MovieService.getMovieData();
-
-// fetch redits
-const type = ref("movie");
-const tmdb = ref("tt28607951");
-const { data: credits } = useGetListCredit(type, tmdb);
-const castList = computed(() => credits.value?.cast?.slice(0, 5) ?? []);
+// recommend movie
+const { data: recommendMovie } = useGetListRecommend(movieId);
 
 // active item
 const activeItem = ref<number | null>(0);
@@ -131,35 +124,149 @@ const setActive = (index: number) => {
 
 // handle set index episode
 const activeEpisode = ref<number | null>(
-  route.query.ep ? Number(route.query.ep) : null
+  route.query.ep ? Number(route.query.ep) : 1
 );
 watch(() => route.query.ep, (newEp) => {
-  activeEpisode.value = newEp ? Number(newEp) : null;
+  activeEpisode.value = newEp ? Number(newEp) : 1;
 });
+
+// handle video
+const videoPlayer = ref<any>(null);
+const profileId = computed(() => Number(profile.user?.id));
+const { mutate: mutateHistory } = useSaveHistory();
+const { data: detailHistory } = useGetHistory(profileId, movieId);
+
+onMounted(async () => {
+  if (!profile.user) return;
+  await nextTick();
+
+  if (!videoPlayer.value) {
+    console.error("videoPlayer is null");
+    return;
+  }
+  // Hàm đặt lại currentTime
+  const updateCurrentTime = () => {
+    if (!detailHistory.value?.data || !videoPlayer.value.plyr) return;
+    const { timeProcess } = detailHistory.value.data;
+    // Kiểm tra nếu plyr đã sẵn sàng thì set ngay, nếu chưa thì chờ sự kiện
+    if (videoPlayer.value.plyr.ready) {
+      videoPlayer.value.plyr.currentTime = timeProcess;
+    } else {
+      videoPlayer.value.plyr.once("loadedmetadata", () => {
+        videoPlayer.value.plyr.currentTime = timeProcess;
+      });
+    }
+  };
+  // Lần đầu tiên chạy ngay khi component được mount
+  updateCurrentTime();
+  // Theo dõi sự thay đổi của detailHistory
+  watch(() => detailHistory.value?.data, () => {
+    updateCurrentTime();
+  }, { immediate: true, deep: true });
+  // Lắng nghe khi video được load lại
+  videoPlayer.value.plyr.on("loadedmetadata", updateCurrentTime);
+});
+
+function handlePause() {
+  if (!profile.user) return;
+  mutateHistory({
+    profileId: Number(profile.user?.id),
+    movieId: Number(movieId.value),
+    timeProcess: videoPlayer.value.plyr?.currentTime,
+    episode: Number(activeEpisode.value),
+    lastWatchedAt: new Date().toISOString().slice(0, 19).replace("T", " "),
+  })
+}
+
+// handle cast
+const type = ref<string>("");
+const tmdb = ref<string>("");
+
+watch(() => [movie.value.type, movie.value.imdb], () => {
+  type.value = ["series", "hoathinh", "tvshows"].includes(movie.value.type ?? "")
+    ? "tv" : movie.value.type === "single" ? "movie" : "default";
+  tmdb.value = movie.value.imdb ?? "113268";
+}, { immediate: true });
+
+const { data: tvTMDB } = useGetMovieById(tmdb, type);
+const resolvedTmdb = computed(() => {
+  if (type.value === "tv" && tvTMDB.value?.tv_results?.[0]?.id) {
+    return String(tvTMDB.value.tv_results[0].id);
+  }
+  return movie.value.imdb ?? "113268";
+});
+
+const { data: credits } = useGetListCredit(type, resolvedTmdb);
+const castList = computed(() => credits.value?.cast?.slice(0, 6) ?? []);
+
+// chat
+// Biến lưu tin nhắn mới
+const router = useRouter();
+const roomId = ref<any>(
+  route.query.room ? route.query.room : null
+);
+
+watch(
+  () => route.query.room,
+  (newRoom) => {
+    if (newRoom) {
+      location.reload();
+    }
+  }
+);
+
+function watchTogether() {
+  router.push({ 
+    path: `/xem-phim/${movie.value.slug}`, 
+    query: { room: 123 } 
+  });
+}
+
+useHead(() => ({
+  title: movie.value.title ? `Xem Phim - ${movie.value.title}` : 'Đang tải...',
+  link: [
+    {
+      rel: 'preload',
+      as: 'image',
+      href: movie.value.poster,
+    },
+    {
+      rel: 'preload',
+      as: 'image',
+      href: movie.value.thumbnail,
+    },
+  ],
+}));
+
+// responsive
+const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 </script>
 
 <template>
   <Box
     :style="{
-      padding: '150px 70px 60px'
+      padding: (!isMobile && !isTablet) ? '150px 70px 100px' : '50px 0px'
     }"
   >
-  <h2 :style="{ fontSize: '1.25rem', fontWeight: '500' }">
-    Bạn đang xem phim: Avengers: {{ movie.title }}
+  <h2 :style="{ fontSize: '1.25rem', fontWeight: '500' }" v-show="!isMobile && !isTablet">
+    Bạn đang xem phim: {{ movie.title }}
   </h2>
-  <Box :style="{ width: '100%', height: '900px', position: 'relative', margin: '1rem 0' }">
-    <vue-plyr :style="{ width: '100%', height: '100%', position: 'absolute' }">
-      <video ref="videoPlayer" src="https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-1080p.mp4" data-poster="https://example.com/poster.jpg" controls playsinline width="100%">
-        <p>Your browser does not support HTML5 video.</p>
-      </video>
-    </vue-plyr>
-  </Box>
-  <Flex :style="{ width: '100%' }" justify="center">
+  <Flex gap="8px">  
+    <Box :style="{ width: '100%', height: (!isMobile && !isTablet) ? '900px' : '400px', position: 'relative', margin: '1rem 0' }">
+      <vue-plyr @pause="handlePause" :poster="movie.poster" :style="{ width: '100%', height: '100%', position: 'absolute', objectFit: 'cover' }">
+        <video ref="videoPlayer" src="https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-1080p.mp4" data-poster="https://example.com/poster.jpg" controls playsinline width="100%">
+          <p>Your browser does not support HTML5 video.</p>
+        </video>
+      </vue-plyr>
+    </Box>
+    <ChatBox v-show="roomId"/>
+  </Flex>
+  <Flex :style="{ width: '100%' }" justify="center" :direction="isDesktop ? 'row' : 'column'">
     <Flex
       direction="column"
       gap="24px"
       :style="{ 
-        width: '1200px', 
+        width: (isDesktop || isLaptop) ? 'auto' : '100%', 
         maxWidth: '1200px',
         padding: '10px',
         borderRight: '1px solid #272932' 
@@ -168,6 +275,7 @@ watch(() => route.query.ep, (newEp) => {
       <Flex
         gap="12px"
         :style="{ width: '100%', paddingBottom: '8px' }"
+        v-show="isDesktop"
       >
         <!-- Img box -->
         <Box 
@@ -246,22 +354,22 @@ watch(() => route.query.ep, (newEp) => {
           }"
         >
           <p :style="{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: '3', overflow: 'hidden', fontWeight: 'normal' }">
-            {{ plainDescription }}
+            {{ getPlainDescription(movie.description ?? '') }}
           </p>
           <Flex gap="12px">
-            <Button label="Xem cùng nhau" icon="pi pi-users" />
+            <Button label="Xem cùng nhau" icon="pi pi-users" @click="watchTogether"/>
             <Button label="Yêu thích" icon="pi pi-heart-fill" :style="{ backgroundColor: '#dc2626', border: 'none' }" />
           </Flex>
         </Flex>
       </Flex>
-      <Divider/>
+      <Divider v-show="!isMobile && !isTablet"/>
       <Box :style="{ width: '100%' }">
-        <Flex align="center" :style="{ marginBottom: '1.5rem!important' }" gap="16px">
+        <Flex :align="(isDesktop || isLaptop) ? 'center' : 'flex-start'" :style="{ marginBottom: '1.5rem!important' }" gap="16px" :direction="(isDesktop || isLaptop) ? 'row' : 'column'">
           <Flex align="center" justify="center" gap="8px">
             <i class="pi pi-bars" style="padding-top: 4px"/>
             <h2 :style="{ fontSize: '1.25rem', fontWeight: 'bold' }">Danh sách tập</h2>
           </Flex>
-          <Divider layout="vertical"/>
+          <Divider layout="vertical" v-show="!isMobile && !isTablet"/>
           <Flex gap="20px">
             <Flex
               v-for="(item, index) in serverItems"
@@ -317,24 +425,25 @@ watch(() => route.query.ep, (newEp) => {
               :replies="comment.replies"
               @update:isRefetch="isRefetchComments()"
             />
-            <h3 v-if="totalComments == 0">Chưa có bình luận, hãy bình luận nào!!!</h3>
+            <h3 v-if="totalComments == 0" :style="{ fontSize: isDesktop || isLaptop ? '18px' : '14px' }">Chưa có bình luận, hãy bình luận nào!!!</h3>
           </Flex>
         </Flex>
       </Box>
     </Flex>
-    <Box :style="{ width: '440px', maxWidth: '440px', padding: '1rem 2.5rem' }">
+    <Box :style="{ width: (isDesktop || isLaptop) ? 'auto' : '100%', maxWidth: isDesktop ? '440px' : 'none', minWidth: '440px', padding: isDesktop ? '1rem 2.5rem' : '1rem .5rem' }">
       <Box :style="{ width: '100%' }">
         <h2 :style="{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem!important' }">Diễn viên</h2>
-        <Flex wrap="wrap">
+        <Flex wrap="wrap" v-show="castList.length > 0">
           <CastCircleItem v-for="(item, index) in castList" :key="index" :data="item"/>
         </Flex>
+        <p v-show="castList.length === 0" :style="{ color: '#6B7280' }">Chưa có thông tin</p>
       </Box>
       <Box :style="{ width: '100%' }">
         <h2 :style="{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem!important' }">Đề xuất</h2>
-        <NuxtLink v-for="(item, index) in suggestMovie" :key="index" :to="`/phim/${item.slug}`" style="text-decoration: none; color: inherit;">
+        <NuxtLink v-for="(item, index) in recommendMovie?.data" :key="index" :to="`/phim/${item.slug}`" style="text-decoration: none; color: inherit;">
           <Flex gap="20px" :style="{ backgroundColor: '#272932', padding: '10px', borderRadius: '8px', marginBottom: '10px' }">
             <NuxtImg
-              :src="item.poster"
+              :src="item.thumbnail"
               alt="icon"
               :style="{
                 width: '80px',
@@ -352,17 +461,17 @@ watch(() => route.query.ep, (newEp) => {
                 {{ item.title }}
               </h4>
               <h4 :style="{ fontSize: '12px', margin: '0px' }">
-                {{ item.original_title }}
+                {{ item.name }}
               </h4>
               <Flex :style="{ fontSize: '12px', color: '#aaa' }">
-                {{ item.releaseYear }} 
+                {{ item.year }} 
                 <Divider layout="vertical" />
-                {{ item.model }}
+                {{ item.lang }}
                 <Divider layout="vertical" />
-                {{ item.totalEpisodes }} Tập
+                {{ item.esp_total }} Tập
               </Flex>
               <span :style="{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: '2', overflow: 'hidden', fontWeight: 'normal', fontSize: '12px', color: '#aaa' }">
-                {{ item.description }}
+                {{ getPlainDescription(item.description ?? '') }}
               </span>
             </Flex>
           </Flex>
@@ -393,5 +502,28 @@ watch(() => route.query.ep, (newEp) => {
   font-weight: bold;
   border-radius: 8px;
   cursor: pointer;
+}
+
+.zoom-enter-active {
+  transition: transform 0.5s ease, opacity 0.5s ease;
+}
+.zoom-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.zoom-enter-from {
+  transform: scale(0);
+  opacity: 0;
+}
+.zoom-enter-to {
+  transform: scale(1);
+  opacity: 1;
+}
+.zoom-leave-from {
+  transform: scale(1);
+  opacity: 1;
+}
+.zoom-leave-to {
+  transform: scale(0);
+  opacity: 0;
 }
 </style>

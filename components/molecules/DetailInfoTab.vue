@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import Box from '../atoms/Box.vue';
+import Flex from '../atoms/Flex.vue';
 import CastList from './CastList.vue';
 import EpisodeList from './EpisodeList.vue';
 
-const props = defineProps<{ espCurrent?: string; slug?: string}>();
+const props = defineProps<{ espCurrent?: string; movie?: Movie}>();
+const serverItems = [
+  { content: "Vietsub" },
+  { content: "Thuyết minh" },
+];
+
+const activeItem = ref<number | null>(0);
+const setActive = (index: number) => {
+  activeItem.value = index;
+};
 </script>
 
 <template>
@@ -16,10 +26,38 @@ const props = defineProps<{ espCurrent?: string; slug?: string}>();
       </TabList>
       <TabPanels>
         <TabPanel value="0">
-          <EpisodeList :esp-current="espCurrent" :slug="slug"/>
+          <Flex direction="column" :style="{ marginBottom: '1.5rem!important' }" gap="16px">
+            <Flex gap="20px">
+              <Flex
+                v-for="(item, index) in serverItems"
+                :key="index"
+                align="center"
+                gap="10px"
+                @click="setActive(index)"
+                :style="{
+                  border: activeItem === index ? '1px solid yellow' : 'none',
+                  padding: '8px',
+                  fontSize: '12px',
+                  borderRadius: '6px',
+                  color: activeItem === index ? 'yellow' : '#fff',
+                  opacity: activeItem === index ? '1' : '.8',
+                  cursor: 'pointer'
+                }"
+              >
+                <i class="pi pi-server" :style="{ color: activeItem === index ? 'yellow' : '#fff' }" />
+                {{ item.content }}
+              </Flex>
+            </Flex>
+            <ScrollPanel :style="{ width: '100%', overflow: 'auto', minHeight: '65px', maxHeight: '235px' }">
+              <EpisodeList 
+                :esp-current="espCurrent"
+                :slug="movie?.slug"
+              />
+            </ScrollPanel>
+          </Flex>
         </TabPanel>
         <TabPanel value="1">
-          <CastList/>
+          <CastList :type="movie?.type" :imdb="movie?.imdb"/>
         </TabPanel>
         <TabPanel value="2">
           <p class="m-0">
