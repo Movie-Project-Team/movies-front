@@ -10,3 +10,6 @@
   for = "/*"
     [headers.values]
       Access-Control-Allow-Origin = "*"
+[[images.remote_patterns]]
+  protocol = "https"
+  hostname = "img.ophim.live"

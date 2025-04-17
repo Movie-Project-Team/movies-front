@@ -78,4 +78,8 @@ export default defineNuxtConfig({
       PUSHER_SCHEME: process.env.NUXT_PUBLIC_PUSHER_SCHEME,
     }
   },
+  image: {
+    domains: ['img.ophim.live'],
+    provider: 'ipx',
+  }
 })
