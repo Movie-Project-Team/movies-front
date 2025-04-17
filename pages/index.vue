@@ -78,7 +78,7 @@ const shuffledSlides = computed(() => {
     <div class="swiper-wrapper">
       <div class="swiper-wrapper__inner">
         <ClientOnly>
-          <swiper-container ref="swiperCreativeRef" class="swiper-creative" :loop="true" :init="false" v-show="shuffledSlides.length > 0">
+          <swiper-container ref="swiperCreativeRef" class="swiper-creative" :style="{ height: isMobile ? '600px' : '100vh', maxHeight: isMobile ? '600px' : '100vh' }" :loop="true" :init="false" v-show="shuffledSlides.length > 0">
             <swiper-slide
               v-for="slide in shuffledSlides"
               :key="`main-slide-creative-${slide.id}`"
