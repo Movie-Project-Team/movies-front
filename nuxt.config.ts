@@ -64,7 +64,7 @@ export default defineNuxtConfig({
     public: {
       apiBaseUrl: {
         base: 'https://dummyjson.com',
-        reBase: 'http://127.0.0.1:8000/api/v1/client',
+        reBase: 'http://api.dreamland.io.vn/api/v1/client',
         tmdb: 'https://api.themoviedb.org/3',
       },
       tmdbApiKey: process.env.TMDB_API_KEY,
@@ -78,8 +78,8 @@ export default defineNuxtConfig({
       PUSHER_SCHEME: process.env.NUXT_PUBLIC_PUSHER_SCHEME,
     }
   },
-  image: {
-    domains: ['img.ophim.live'],
-    provider: 'netlify'
-  }
+  // image: {
+  //   domains: ['img.ophim.live'],
+  //   provider: 'netlify'
+  // }
 })
