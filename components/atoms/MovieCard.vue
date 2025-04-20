@@ -180,7 +180,7 @@ const overlayStyle = computed(() => {
       @click="goToDetail"
       :direction="isVer2 ? 'row' : 'column'" 
       :justify="isVer2 ? 'flex-start' : 'center'" 
-      :style="{ cursor: 'pointer', maxWidth: '221px' }"
+      :style="{ cursor: 'pointer', maxWidth: (!isMobile && !isTablet) ? '221px' : '104px' }"
     >
       <Box
         :style="{
@@ -195,8 +195,8 @@ const overlayStyle = computed(() => {
       </Box>
       <Box :style="{ 
         position: 'relative',
-        minHeight: isMobile ? '156px' : (!isVer2 ? '330px' : '0px'),
-        height: isMobile ? '156px' : (!isVer2 ? '330px' : '40px')
+        minHeight: (isMobile || isTablet) ? '156px' : (!isVer2 ? '330px' : '0px'),
+        height: (isMobile || isTablet) ? '156px' : (!isVer2 ? '330px' : '40px')
       }">
         <NuxtImg
           :src="imageSrc" 
@@ -204,10 +204,10 @@ const overlayStyle = computed(() => {
           format="webp"
           loading="lazy"
           :style="{ 
-            width: isMobile ? '104px' : (isVer2 ? '25px' : '221px'),
+            width: (isMobile || isTablet) ? '104px' : (isVer2 ? '25px' : '221px'),
             borderRadius: isVer2 ? '0px' : '8px',
-            minHeight: isMobile ? '104px' : (isVer2 ? '0px' : '330px'),
-            maxHeight: isMobile ? 'none' : (isVer2 ? '40px' : '330px'),
+            minHeight: (isMobile || isTablet) ? '156px' : (isVer2 ? '0px' : '330px'),
+            maxHeight: (isMobile || isTablet) ? 'none' : (isVer2 ? '40px' : '330px'),
           }"
           @mouseover="(e: any) => e.currentTarget.style.opacity = '0.7'"
           @mouseleave="(e: any) => e.currentTarget.style.opacity = '1'"

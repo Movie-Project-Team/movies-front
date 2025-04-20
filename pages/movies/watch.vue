@@ -16,6 +16,7 @@ import { useGetMovieById } from '~/composables/api/movies/use-get-by-id';
 import { useGetListRecommend } from '~/composables/api/movies/use-get-list-recommend';
 import ChatBox from '~/components/molecules/ChatBox.vue';
 import useResponsive from '~/composables/resize/use-responsive';
+import Hls from 'hls.js';
 
 const tagItems = computed(() => [
   { content: movie.value.vote_average ?? "N/A", subContent: "IMBd", type: "imdb" },
@@ -40,11 +41,6 @@ const genreItems = [
   { content: "Viễn Tưởng", type: "topic" },
   { content: "Phiêu Lưu", type: "topic" },
   { content: "Khoa Học", type: "topic" }
-];
-
-const serverItems = [
-  { content: "Vietsub" },
-  { content: "Thuyết minh" },
 ];
 
 const loading = useLoadingStore();
@@ -240,6 +236,46 @@ useHead(() => ({
 
 // responsive
 const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
+
+// episodes
+const episodes = computed(() => {
+  if (movie.value?.episodes && movie.value.episodes.length > 0) {
+    return movie.value.episodes[0].server_data ?? [];
+  }
+  return [];
+});
+
+const serverItems = computed(() => {
+  if (movie.value?.episodes && movie.value.episodes.length > 0) {
+    return movie.value.episodes ?? [];
+  }
+  return [];
+});
+
+// src video
+const srcVideo = computed(() => {
+  const servers = movie.value?.episodes;
+  if (!servers || servers.length === 0) return null;
+
+  const serverData = servers[0].server_data;
+  if (movie.value.esp_total == 1 && serverData) { 
+    return serverData[0]?.link_download || null;
+  } else {
+    const episode = serverData.find(ep => ep.name === String(activeEpisode.value));
+    return episode?.link_download || null;
+  }
+});
+
+watchEffect(() => {
+  const source = srcVideo.value;
+  
+  if (Hls.isSupported() && source && videoPlayer.value) {
+    const hls = new Hls();
+    hls.loadSource(source);
+    hls.attachMedia(videoPlayer.value);
+  }
+});
+
 </script>
 
 <template>
@@ -253,7 +289,7 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
   </h2>
   <Flex gap="8px">  
     <Box :style="{ width: '100%', height: (!isMobile && !isTablet) ? '900px' : '400px', position: 'relative', margin: '1rem 0' }">
-      <vue-plyr @pause="handlePause" :poster="movie.poster" :style="{ width: '100%', height: '100%', position: 'absolute', objectFit: 'cover' }">
+      <vue-plyr @pause="handlePause" :poster="movie.poster" :style="{ width: '100%', height: '100%', position: 'absolute' }">
         <video ref="videoPlayer" src="https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-1080p.mp4" data-poster="https://example.com/poster.jpg" controls playsinline width="100%">
           <p>Your browser does not support HTML5 video.</p>
         </video>
@@ -388,15 +424,15 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
               }"
             >
               <i class="pi pi-server" :style="{ color: activeItem === index ? 'yellow' : '#fff' }" />
-              {{ item.content }}
+              {{ item.server_name }}
             </Flex>
           </Flex>
         </Flex>
         <ScrollPanel :style="{ width: '100%', overflow: 'auto', minHeight: '65px', maxHeight: '235px' }">
           <EpisodeList 
-            :esp-current="movie?.esp_current" 
             :slug="movie?.slug" 
             :activeEpisode="activeEpisode"
+            :esp-data="episodes"
           />
         </ScrollPanel>
       </Box>
@@ -430,7 +466,7 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
         </Flex>
       </Box>
     </Flex>
-    <Box :style="{ width: (isDesktop || isLaptop) ? 'auto' : '100%', maxWidth: isDesktop ? '440px' : 'none', minWidth: '440px', padding: isDesktop ? '1rem 2.5rem' : '1rem .5rem' }">
+    <Box :style="{ width: (isDesktop || isLaptop) ? 'auto' : '100%', maxWidth: isDesktop ? '440px' : 'none', padding: isDesktop ? '1rem 2.5rem' : '1rem .5rem' }">
       <Box :style="{ width: '100%' }">
         <h2 :style="{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem!important' }">Diễn viên</h2>
         <Flex wrap="wrap" v-show="castList.length > 0">
@@ -441,7 +477,7 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
       <Box :style="{ width: '100%' }">
         <h2 :style="{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem!important' }">Đề xuất</h2>
         <NuxtLink v-for="(item, index) in recommendMovie?.data" :key="index" :to="`/phim/${item.slug}`" style="text-decoration: none; color: inherit;">
-          <Flex gap="20px" :style="{ backgroundColor: '#272932', padding: '10px', borderRadius: '8px', marginBottom: '10px' }">
+          <Flex gap="20px" :style="{ backgroundColor: '#272932', padding: '10px', borderRadius: '8px', marginBottom: '10px', width: (!isMobile && !isTablet) ? 'auto' : 'calc(100vw - 30px)' }">
             <NuxtImg
               :src="item.thumbnail"
               alt="icon"

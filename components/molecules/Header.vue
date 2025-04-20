@@ -161,11 +161,11 @@ const { isLaptop, isDesktop } = useResponsive();
       </Flex>
     </template>
     <template #end>
-      <Flex gap="24px" align="center">
+      <Flex align="center" gap="20px">
         <IconField
           :style="{
             position: !isDesktop ? 'absolute' : 'relative',
-            width: !isDesktop ? '70%!important' : 'auto!important',
+            width: !isDesktop ? 'calc(100% - 144px)!important' : 'auto!important',
             top: '0',
             left: '0',
           }"
@@ -230,7 +230,7 @@ const { isLaptop, isDesktop } = useResponsive();
             </template>
           </AutoComplete>
         </IconField>
-        <template v-if="!isDesktop">
+        <template v-if="!isDesktop" :style="{ position: 'absolute' }">
           <i :class="!isSearchVisible ? 'pi pi-search' : 'pi pi-times'" style="cursor: pointer" @click="toggleSearch"></i>
         </template>
         <Box v-show="isDesktop">
