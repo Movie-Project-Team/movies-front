@@ -9,6 +9,19 @@ type Routes = {
   [key: string]: Route;
 };
 
+type EpisodeResponse = {
+  id: number;
+  name: string;
+  slug: string;
+  link_watch: string;
+  link_download: string;
+}
+
+type ServerResponse = {
+  server_name: string;
+  server_data: EpisodeResponse[];
+}
+
 type Movie = {
   id: number;
   title?: string;
@@ -35,6 +48,7 @@ type Movie = {
   totalEpisodes?: number;
   genres?: string[];
   description?: string;
+  episodes: ServerResponse[];
 };
 
 type MovieTmdb = {
@@ -54,12 +68,19 @@ type Profile = {
   gender: number,
   phone: number,
   password: string,
+  favorites: Movie[]
 }
 
 type ProfileReponse = {
   data: {
     data: Profile[],
   }
+}
+
+type ProfileDetailReponse = {
+  code: number,
+  message: string,
+  data: Profile,
 }
 
 type GenresReponse = {

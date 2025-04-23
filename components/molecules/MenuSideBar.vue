@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { useGetListGenres } from '~/composables/api/util/use-get-list-genres';
 import { useGetListLanguage } from '~/composables/api/util/use-get-list-language';
+import useResponsive from '~/composables/resize/use-responsive';
 
 const { data: languageResponse } = useGetListLanguage();
 const { data: genresResponse } = useGetListGenres();
@@ -30,45 +31,51 @@ const formatData = (response, type) => {
 const languageData = computed(() => formatData(languageResponse, 'lang'));
 const genresData = computed(() => formatData(genresResponse, 'gen'));
 const emit = defineEmits(['openAuthModal']);
+// responsive
+const { isLaptop, isDesktop } = useResponsive();
 
-const items = ref([
-  {
-    label: 'Trang chủ',
-    command: () => {
-      router.push('/');
+const items = ref([]);
+
+watchEffect(() => {
+  const list = [
+    {
+      label: 'Trang chủ',
+      command: () => router.push('/'),
     },
-  },
-  {
-    label: 'Thể loại',
-    items: genresData
-  },
-  {
-    label: 'Quốc gia',
-    items: languageData
-  },
-  {
-    label: 'Tìm kiếm',
-    command: () => {
-      router.push({ path: '/tim-kiem', query: { page: 1 } });
+    {
+      label: 'Thể loại',
+      items: genresData.value,
     },
-  },
-  {
-    label: 'Phim sắp chiếu',
-    command: () => {
-      router.push('/sap-chieu');
+    {
+      label: 'Quốc gia',
+      items: languageData.value,
     },
-  },
-  {
-    label: 'Xem chung',
-    command: () => {
-      if (!cookieAuth) {
-        emit('openAuthModal');
-      } else {
-        router.push("/xem-chung");
+    {
+      label: 'Tìm kiếm',
+      command: () => router.push({ path: '/tim-kiem', query: { page: 1 } }),
+    },
+    {
+      label: 'Phim sắp chiếu',
+      command: () => router.push('/sap-chieu'),
+    }
+  ];
+
+  if (isLaptop.value || isDesktop.value) {
+    list.push({
+      label: 'Xem chung',
+      command: () => {
+        if (!cookieAuth) {
+          emit('openAuthModal');
+        } else {
+          router.push("/xem-chung");
+        }
       }
-    },
-  },
-]);
+    });
+  }
+
+  items.value = list;
+});
+
 </script>
 
 <template>

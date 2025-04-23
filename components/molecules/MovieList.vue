@@ -24,11 +24,15 @@ useSwiper(swiperCreativeRef, {
       slidesPerView: 3,
       spaceBetween: 20,
     },
-    '600': {
+    '510': {
       slidesPerView: 4,
       spaceBetween: 20,
     },
-    '765': {
+    '700': {
+      slidesPerView: 6,
+      spaceBetween: 20,
+    },
+    '960': {
       slidesPerView: 3,
       spaceBetween: 20,
     },

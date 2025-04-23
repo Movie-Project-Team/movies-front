@@ -5,6 +5,7 @@ import FilterContainer from '~/components/molecules/FilterContainer.vue';
 import MovieListV2 from '~/components/molecules/MovieListV2.vue';
 import Pagination from '~/components/molecules/Pagination.vue';
 import { useGetListMovie } from '~/composables/api/movies/use-get-list-movie';
+import useResponsive from '~/composables/resize/use-responsive';
 
 const loading = useLoadingStore();
 const route = useRoute();
@@ -63,13 +64,18 @@ const changePage = async (page: number) => {
     localLoading.value = false;
   }, 500);
 };
+
+// responsive
+const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 </script>
 
 <template>
   <Flex 
     direction="column" 
     gap="40px"
-    :style="{ padding: '150px 70px 100px' }"
+    :style="{
+      padding: (!isMobile && !isTablet) ? '150px 70px 100px' : '50px 20px'
+    }"
   >
     <h1 :style="{ margin: '4px 0px' }">Tìm kiếm</h1>
     <FilterContainer />

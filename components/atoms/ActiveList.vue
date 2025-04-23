@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import useResponsive from '~/composables/resize/use-responsive';
 import Box from '../atoms/Box.vue';
 import Flex from '../atoms/Flex.vue';
 import { ref } from "vue";
@@ -56,15 +57,18 @@ const setActive = (index: number) => {
   const selectedValue = toSlug(itemSlugs.value[index]); 
   emit("update", selectedValue);
 };
+
+// responsive
+const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 </script>
 
 <template>
   <Box>
-    <Flex gap="40px" :style="{ padding: '16px 20px', fontSize: '15px' }">
-      <Box :style="{ width: '10%' }">
+    <Flex :gap="(!isMobile && !isTablet) ? '40px' : '20px'" :style="{ padding: '16px 20px', fontSize: '15px' }" :direction="(!isMobile && !isTablet) ? 'row' : 'column'">
+      <Box :style="{ width: (!isMobile && !isTablet) ? '10%' : '100%' }">
         <span :style="{ color: '#ffffff', fontWeight: 700 }">{{ data.label }}: </span> 
       </Box>
-      <Flex gap="20px" wrap="wrap" :style="{ width: '90%' }">
+      <Flex gap="20px" wrap="wrap" :style="{ width: (!isMobile && !isTablet) ? '90%' : '100%' }">
         <span
           v-for="(item, index) in data.items"
           :key="index"

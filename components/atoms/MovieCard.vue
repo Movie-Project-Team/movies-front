@@ -6,6 +6,10 @@ import Box from './Box.vue';
 import Flex from './Flex.vue';
 import { formatDate } from '~/utils/date';
 import Tag from './Tag.vue';
+import { useCreateFavorite } from '~/composables/api/profile/use-create-favorite';
+import { useDeleteFavorite } from '~/composables/api/profile/use-delete-favorite';
+import { useGetProfile } from '~/composables/api/profile/use-get-profile';
+import { useToastMessage } from '~/composables/toast/useToastMessage';
 
 const props = defineProps<{
   data: Movie | MovieTmdb;
@@ -15,6 +19,7 @@ const props = defineProps<{
 
 const config = useRuntimeConfig();
 const movieStore = useMovieStore();
+const profile = useProfileStore();
 const isMovie = (data: Movie | MovieTmdb): data is Movie => {
   return (data as Movie).slug !== undefined;
 };
@@ -81,6 +86,7 @@ let hoverTimer: ReturnType<typeof setTimeout> | null = null;
 const showLargeTitle = computed(() => cardDelayed.value || overlayHovered.value);
 
 const cardRef = ref<HTMLElement | null>(null);
+const bounds = useElementBounding(cardRef);
 
 // Sử dụng useElementBounding để lấy tọa độ phần tử
 let x = ref(0);
@@ -101,7 +107,6 @@ const onCardMouseOver = () => {
     }, 800);
   }
   if (cardRef.value) {
-    const bounds = useElementBounding(cardRef);
     x.value = bounds.x.value;
     y.value = bounds.y.value;
     top.value = bounds.top.value;
@@ -167,20 +172,62 @@ const overlayStyle = computed(() => {
 
   return styles;
 });
+
+// add favorite
+const isFavorite = ref(false);
+const createFavoriteMutation = useCreateFavorite();
+const deleteFavoriteMutation = useDeleteFavorite();
+const profileId = ref(String(profile?.user?.id ?? ""));
+const { data: favoriteList } = useGetProfile(profileId);
+const toast = useToastMessage();
+
+watch(favoriteList, (list) => {
+  if (list && props.data?.id) {
+    isFavorite.value = list.data.favorites.some((item: any) => item.id === props.data.id);
+  }
+}, { immediate: true });
+
+const toggleFavorite = async () => {
+  const payload = {
+    profileId: Number(profile.user?.id),
+    movieId: props.data.id,
+  };
+
+  if (!isFavorite.value) {
+    try {
+      await createFavoriteMutation.mutateAsync(payload);
+      isFavorite.value = true;
+      toast.success('Đã thêm vào yêu thích', `Phim ${props.data.title} đã được thêm vào danh sách yêu thích thành công!`);
+    } catch (error) {
+      console.error("Error removing favorite:", error);
+      toast.error('Lỗi', 'Không thể thực hiện thao tác. Vui lòng thử lại.');
+    }
+  } else {
+    try {
+      await deleteFavoriteMutation.mutateAsync(payload); 
+      isFavorite.value = false;
+      toast.info('Đã xoá khỏi yêu thích', `Phim ${props.data.title} đã được xoá khỏi danh sách yêu thích.`);
+    } catch (error) {
+      console.error("Error adding favorite:", error);
+      toast.error('Lỗi', 'Không thể thực hiện thao tác. Vui lòng thử lại.');
+    }
+  }
+};
 </script>
 
 <template>
   <div ref="cardRef" style="position: relative; overflow: visible;" class="movie-card">
+    <Toast />
     <!-- Card chính -->
     <Flex 
       align="center" 
       gap="12px" 
-      @mouseover="onCardMouseOver" 
+      @mouseenter="onCardMouseOver" 
       @mouseleave="onCardMouseLeave"
       @click="goToDetail"
       :direction="isVer2 ? 'row' : 'column'" 
       :justify="isVer2 ? 'flex-start' : 'center'" 
-      :style="{ cursor: 'pointer', maxWidth: '221px' }"
+      :style="{ cursor: 'pointer', maxWidth: (!isMobile && !isTablet) ? '221px' : '104px' }"
     >
       <Box
         :style="{
@@ -195,8 +242,8 @@ const overlayStyle = computed(() => {
       </Box>
       <Box :style="{ 
         position: 'relative',
-        minHeight: isMobile ? '156px' : (!isVer2 ? '330px' : '0px'),
-        height: isMobile ? '156px' : (!isVer2 ? '330px' : '40px')
+        minHeight: (isMobile || isTablet) ? '156px' : (!isVer2 ? '330px' : '0px'),
+        height: (isMobile || isTablet) ? '156px' : (!isVer2 ? '330px' : '40px')
       }">
         <NuxtImg
           :src="imageSrc" 
@@ -204,10 +251,10 @@ const overlayStyle = computed(() => {
           format="webp"
           loading="lazy"
           :style="{ 
-            width: isMobile ? '104px' : (isVer2 ? '25px' : '221px'),
+            width: (isMobile || isTablet) ? '104px' : (isVer2 ? '25px' : '221px'),
             borderRadius: isVer2 ? '0px' : '8px',
-            minHeight: isMobile ? '104px' : (isVer2 ? '0px' : '330px'),
-            maxHeight: isMobile ? 'none' : (isVer2 ? '40px' : '330px'),
+            minHeight: (isMobile || isTablet) ? '156px' : (isVer2 ? '0px' : '330px'),
+            maxHeight: (isMobile || isTablet) ? 'none' : (isVer2 ? '40px' : '330px'),
           }"
           @mouseover="(e: any) => e.currentTarget.style.opacity = '0.7'"
           @mouseleave="(e: any) => e.currentTarget.style.opacity = '1'"
@@ -293,9 +340,9 @@ const overlayStyle = computed(() => {
             <p :style="{ fontSize: '13px', margin: 0 }">{{ data.name }}</p>
           </Flex>
           <Flex gap="8px">
-            <Button label="Xem phim" icon="pi pi-play" @click="goToDetail" :style="{ fontSize: '13px' }"/>
-            <Button label="Yêu thích" icon="pi pi-heart" :style="{ backgroundColor: '#dc2626', border: 'none', fontSize: '13px' }" />
-            <Button label="Xem sau" icon="pi pi-bookmark" :style="{ background: 'none', border: '1px solid #ffffff', fontSize: '13px' }" />
+            <Button label="Xem phim" icon="pi pi-play" @click="goToDetail" :style="{ fontSize: '13px', width: profile?.user ? 'auto' : '100%' }"/>
+            <Button label="Yêu thích" v-if="profile?.user"  icon="pi pi-heart" :style="{ backgroundColor: isFavorite ? '#dc2626' : '#ccc', border: 'none', fontSize: '13px' }" @click="toggleFavorite" />
+            <Button label="Xem sau" v-if="profile?.user" icon="pi pi-bookmark" :style="{ background: 'none', border: '1px solid #ffffff', fontSize: '13px' }" />
           </Flex>
           <Flex direction="column" gap="16px">
             <Flex gap="8px" :justify="isMobile ? 'center' : 'flex-start'">

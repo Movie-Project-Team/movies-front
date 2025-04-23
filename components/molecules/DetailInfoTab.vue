@@ -5,15 +5,25 @@ import CastList from './CastList.vue';
 import EpisodeList from './EpisodeList.vue';
 
 const props = defineProps<{ espCurrent?: string; movie?: Movie}>();
-const serverItems = [
-  { content: "Vietsub" },
-  { content: "Thuyết minh" },
-];
-
 const activeItem = ref<number | null>(0);
 const setActive = (index: number) => {
   activeItem.value = index;
 };
+const { movie } = toRefs(props)
+
+// episodes
+const episodes = computed(() => {
+  if (movie.value?.episodes && movie.value.episodes.length > 0) {
+    return movie.value.episodes[0].server_data ?? [];
+  }
+  return [];
+});
+const serverItems = computed(() => {
+  if (movie.value?.episodes && movie.value.episodes.length > 0) {
+    return movie.value.episodes ?? [];
+  }
+  return [];
+});
 </script>
 
 <template>
@@ -45,13 +55,14 @@ const setActive = (index: number) => {
                 }"
               >
                 <i class="pi pi-server" :style="{ color: activeItem === index ? 'yellow' : '#fff' }" />
-                {{ item.content }}
+                {{ item.server_name }}
               </Flex>
             </Flex>
             <ScrollPanel :style="{ width: '100%', overflow: 'auto', minHeight: '65px', maxHeight: '235px' }">
               <EpisodeList 
                 :esp-current="espCurrent"
                 :slug="movie?.slug"
+                :esp-data="episodes"
               />
             </ScrollPanel>
           </Flex>
