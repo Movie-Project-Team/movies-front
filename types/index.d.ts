@@ -68,12 +68,19 @@ type Profile = {
   gender: number,
   phone: number,
   password: string,
+  favorites: Movie[]
 }
 
 type ProfileReponse = {
   data: {
     data: Profile[],
   }
+}
+
+type ProfileDetailReponse = {
+  code: number,
+  message: string,
+  data: Profile,
 }
 
 type GenresReponse = {

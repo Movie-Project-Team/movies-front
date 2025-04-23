@@ -63,6 +63,11 @@ export default <RouterConfig>{
               name: 'profile-information',
               path: '',
               component: () => import('@/pages/profiles/infomation.vue'),
+            },
+            {
+              name: 'profile-favorite',
+              path: 'favorite',
+              component: () => import('@/pages/profiles/favorite.vue'),
             }
           ]
         },

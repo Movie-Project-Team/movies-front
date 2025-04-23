@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import Flex from '../atoms/Flex.vue';
 
-
 const router = useRouter();
 const menuItems = ref([
-  { label: 'Thông tin', icon: 'pi pi-info-circle', route: '/' },
+  { label: 'Thông tin', icon: 'pi pi-info-circle', route: '/profile' },
   {
     label: 'Quản lý Profile',
     icon: 'pi pi-user',
@@ -14,6 +13,8 @@ const menuItems = ref([
       { label: 'Sửa Profile', route: '/crawler/history' },
     ]
   },
+  { label: 'Danh sách yêu thích', icon: 'pi pi-heart', route: '/profile/favorite' },
+  { label: 'Danh sách xem tiếp', icon: 'pi pi-caret-right', route: '/profile/favorite' },
   { label: 'Cài đặt', icon: 'pi pi-cog', route: '/' },
 ]);
 

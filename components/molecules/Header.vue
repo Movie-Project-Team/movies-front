@@ -150,7 +150,7 @@ const { isLaptop, isDesktop } = useResponsive();
     <template #start>
       <Flex :direction="(isDesktop || isLaptop) ? 'row' : 'row-reverse'" :style="{ visibility: isSearchVisible ? 'hidden' : 'visible' }">
         <img
-          src="https://streamvid.jwsuperthemes.com/wp-content/uploads/2023/02/logo.svg"
+          :src="`/images/logo.png`"
           alt=""
           :style="{
             width: !isDesktop ? '120px' : '200px',
