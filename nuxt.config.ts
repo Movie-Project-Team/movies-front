@@ -64,7 +64,7 @@ export default defineNuxtConfig({
     public: {
       apiBaseUrl: {
         base: 'https://dummyjson.com',
-        reBase: 'http://127.0.0.1:8000/api/v1/client',
+        reBase: 'https://api.dreamland.io.vn/api/v1/client',
         tmdb: 'https://api.themoviedb.org/3',
       },
       tmdbApiKey: process.env.TMDB_API_KEY,
