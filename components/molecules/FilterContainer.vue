@@ -6,6 +6,7 @@ import { nextTick, ref, watchEffect, computed } from 'vue';
 
 const loading = useLoadingStore();
 const router = useRouter();
+const route = useRoute();
 const selectedFilters = ref<Record<string, string | null>>({
   lang: null,
   gen: null,
@@ -18,10 +19,14 @@ const { data: languageResponse, isLoading: isLoadingLanguage } = useGetListLangu
 const { data: genresResponse, isLoading: isLoadingGenres } = useGetListGenres();
 
 const formatData = (response: any) => {
-  return ["Tất cả", ...(response?.value?.data?.map((item: any) => ({
+  const list = response?.value?.data?.map((item: any) => ({
     title: item.title,
-    slug: item.slug
-  })) || [])];
+    slug: item.slug,
+  })) || [];
+  return [
+    { title: 'Tất cả', slug: '' },
+    ...list,
+  ];
 };
 
 const languageData = ref<string[]>([]);
@@ -48,6 +53,27 @@ watchEffect(async () => {
   }
 });
 
+const typeData = [
+  { title: 'Tất cả', slug: '' },
+  { title: 'Phim lẻ', slug: 'single' },
+  { title: 'Phim bộ', slug: 'series' },
+  { title: 'TV Shows', slug: 'tvshows' },
+  { title: 'Phim hoạt hình', slug: 'hoathinh' },
+];
+
+const getYearItems = () => {
+  const current = new Date().getFullYear();
+  const years: string[] = [];
+  
+  for (let i = 0; i < 5; i++) {
+    years.push(String(current - i));
+  }
+
+  years.push(`Trước ${current - 4}`);
+  
+  return ['Tất cả', ...years];
+};
+
 const filterDataList = computed(() => [
   {
     label: "Thể loại",
@@ -59,7 +85,7 @@ const filterDataList = computed(() => [
   },
   {
     label: "Năm phát hành",
-    items: ["Tất cả", "2024", "2023", "2022", "2021", "Trước 2020"],
+    items: getYearItems(),
   },
   {
     label: "Đánh giá",
@@ -67,11 +93,11 @@ const filterDataList = computed(() => [
   },
   {
     label: "Trạng thái phim",
-    items: ["Tất cả", "Đang chiếu", "Sắp chiếu", "Hoàn thành"],
+    items: ["Tất cả", "Đang chiếu", "Hoàn thành"],
   },
   {
     label: "Loại phim",
-    items: ["Tất cả", "Phim lẻ", "Phim bộ", "Phim chiếu rạp", "Phim hoạt hình"],
+    items: typeData,
   },
 ]);
 
@@ -92,14 +118,27 @@ const setFilter = (label: string, value: string) => {
 };
 
 const applyFilters = () => {
-  router.push({
-    path: "/tim-kiem",
-    query: {
-      ...selectedFilters.value,
-      page: "1",
-    },
-  });
+  const params = new URLSearchParams();
+  Object.entries(selectedFilters.value)
+    .filter(([, v]) => v !== null)
+    .forEach(([k, v]) => {
+      params.append(k, v as string);
+    });
+  params.set('page', '1');
+  window.location.href = `/tim-kiem?${params.toString()}`;
 };
+
+const filterKeys = ['lang', 'gen', 'year', 'rating', 'status', 'type'] as const;
+watch(
+  () => route.query,
+  (q) => {
+    filterKeys.forEach(key => {
+      const raw = q[key];
+      selectedFilters.value[key] = raw != null ? String(raw).trim() : null;
+    });
+  },
+  { immediate: true }
+);
 
 const skeletonLoading = computed(() => isLoadingLanguage.value || isLoadingGenres.value);
 </script>

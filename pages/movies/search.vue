@@ -11,28 +11,38 @@ const loading = useLoadingStore();
 const route = useRoute();
 const router = useRouter();
 
+const getQueryString = (value: unknown) => (value ? String(value).trim() : '');
 const params = ref({
   item: 21,
   page: Number(route.query.page) || 1,
-  keyword: route.query.keyword ? String(route.query.keyword).trim() : '',
+  keyword: getQueryString(route.query.keyword),
+  lang: getQueryString(route.query.lang),
+  gen: getQueryString(route.query.gen),
+  year: getQueryString(route.query.year),
+  type: getQueryString(route.query.type),
+  status: getQueryString(route.query.status),
 });
+
 const currentPage = ref(Number(route.query.page) || 1);
 const { data, refetch, isLoading } = useGetListMovie(params);
 const totalPages = computed(() => data.value?.paginate.totalPages ?? 1);
 
-// local loading state dùng để đảm bảo skeleton hiển thị ít nhất 500ms
 const localLoading = ref(false);
 const skeletonLoading = computed(() => localLoading.value || isLoading.value);
 
 watch(
   () => route.query,
   (newQuery) => {
-    const pageNumber = Number(newQuery.page) || 1;
-    const searchKeyword = newQuery.keyword ? String(newQuery.keyword).trim() : '';
-
-    params.value.page = pageNumber;
-    params.value.keyword = searchKeyword;
-    currentPage.value = pageNumber;
+    params.value = {
+      ...params.value,
+      page: Number(newQuery.page) || 1,
+      keyword: getQueryString(newQuery.keyword),
+      lang: getQueryString(newQuery.lang),
+      gen: getQueryString(newQuery.gen),
+      year: getQueryString(newQuery.year),
+      type: getQueryString(newQuery.type),
+      status: getQueryString(newQuery.status),
+    };
 
     refetch();
   },
@@ -66,7 +76,7 @@ const changePage = async (page: number) => {
 };
 
 // responsive
-const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
+const { isMobile, isTablet } = useResponsive();
 </script>
 
 <template>

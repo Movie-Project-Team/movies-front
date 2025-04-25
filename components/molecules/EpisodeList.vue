@@ -3,17 +3,24 @@ import useResponsive from '~/composables/resize/use-responsive';
 import Box from '../atoms/Box.vue';
 import Flex from '../atoms/Flex.vue';
 
-const props = defineProps<{ slug?: string; activeEpisode?: number | null; espData?: EpisodeResponse[] }>();
+const props = defineProps<{ slug?: string; activeEpisode?: number | null; espData?: EpisodeResponse[]; server?: string }>();
 const router = useRouter();
-
 const { espData } = toRefs(props);
+
+const toSlug = (text: string): string => {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") 
+    .replace(/\s+/g, "-");
+};
 
 const activeEpisode = ref<number | null>(props.activeEpisode || 1);
 const handleEpisodeChange = (episode: number) => {
   activeEpisode.value = episode;
   router.push({
     path: `/xem-phim/${props.slug}`,
-    query: { server: "vietsub", ep: episode },
+    query: { server: toSlug(String(props.server)), ep: episode },
   });
 };
 
@@ -35,7 +42,7 @@ const { isLaptop, isDesktop } = useResponsive();
         @click="handleEpisodeChange(Number(episode.slug))"
         :key="index"
         :style="{
-          opacity: activeEpisode == Number(episode) ? '1' : '.8',
+          opacity: activeEpisode == Number(episode.slug) ? '1' : '.8',
           backgroundColor: activeEpisode == Number(episode.slug) ? '#ffd875' : '#282b3a',
           width: (isDesktop || isLaptop) ? '146px' : '105px',
           height: '50px',

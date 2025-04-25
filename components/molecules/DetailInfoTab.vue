@@ -30,9 +30,11 @@ const serverItems = computed(() => {
   <Box>
     <Tabs value="0">
       <TabList>
+        <Flex gap="20px">
           <Tab value="0">Tập phim</Tab>
           <Tab value="1">Diễn viên</Tab>
           <Tab value="2">Đề xuất</Tab>
+        </Flex>
       </TabList>
       <TabPanels>
         <TabPanel value="0">
