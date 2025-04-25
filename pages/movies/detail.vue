@@ -58,10 +58,18 @@ const genreItems = [
   { content: "Khoa Học", type: "topic" }
 ];
 
+const toSlug = (text: string): string => {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") 
+    .replace(/\s+/g, "-");
+};
+
 const goToDetail = (slug: any) => {
   router.push({ 
     path: `/xem-phim/${slug}`, 
-    query: { server: 'vietsub', ep: 1 } 
+    query: { server: toSlug(String(movie.value.episodes[0].server_name)), ep: 1 } 
   });
 };
 

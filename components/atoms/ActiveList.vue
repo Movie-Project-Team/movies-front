@@ -59,7 +59,7 @@ const setActive = (index: number) => {
 };
 
 // responsive
-const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
+const { isMobile, isTablet } = useResponsive();
 </script>
 
 <template>

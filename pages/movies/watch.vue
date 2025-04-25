@@ -244,7 +244,6 @@ const episodes = computed(() => {
   }
   return [];
 });
-
 const serverItems = computed(() => {
   if (movie.value?.episodes && movie.value.episodes.length > 0) {
     return movie.value.episodes ?? [];
@@ -252,20 +251,35 @@ const serverItems = computed(() => {
   return [];
 });
 
+const toSlug = (text: string): string => {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") 
+    .replace(/\s+/g, "-");
+};
+
 // src video
 const srcVideo = computed(() => {
   const servers = movie.value?.episodes;
   if (!servers || servers.length === 0) return null;
 
-  const serverData = servers[0].server_data;
+  const serverSlug = computed(() => {
+    const rawSlug = route.query.server;
+    return rawSlug ? decodeURIComponent(String(rawSlug)) : '';
+  });
+
+  const serverData = computed(() => {
+    return movie.value?.episodes?.find(server => toSlug(server.server_name) === serverSlug.value) || null;
+  });
+  
   if (movie.value.esp_total == 1 && serverData) { 
-    return serverData[0]?.link_download || null;
+    return serverData.value?.server_data[0].link_download || null;
   } else {
-    const episode = serverData.find(ep => ep.name === String(activeEpisode.value));
+    const episode = serverData.value?.server_data.find(ep => ep.name === String(activeEpisode.value));
     return episode?.link_download || null;
   }
 });
-
 watchEffect(() => {
   const source = srcVideo.value;
   
@@ -400,7 +414,7 @@ watchEffect(() => {
       </Flex>
       <Divider v-show="!isMobile && !isTablet"/>
       <Box :style="{ width: '100%' }">
-        <Flex :align="(isDesktop || isLaptop) ? 'center' : 'flex-start'" :style="{ marginBottom: '1.5rem!important' }" gap="16px" :direction="(isDesktop || isLaptop) ? 'row' : 'column'">
+        <!-- <Flex :align="(isDesktop || isLaptop) ? 'center' : 'flex-start'" :style="{ marginBottom: '1.5rem!important' }" gap="16px" :direction="(isDesktop || isLaptop) ? 'row' : 'column'">
           <Flex align="center" justify="center" gap="8px">
             <i class="pi pi-bars" style="padding-top: 4px"/>
             <h2 :style="{ fontSize: '1.25rem', fontWeight: 'bold' }">Danh sách tập</h2>
@@ -429,12 +443,62 @@ watchEffect(() => {
           </Flex>
         </Flex>
         <ScrollPanel :style="{ width: '100%', overflow: 'auto', minHeight: '65px', maxHeight: '235px' }">
-          <EpisodeList 
+          <EpisodeList
             :slug="movie?.slug" 
             :activeEpisode="activeEpisode"
             :esp-data="episodes"
           />
-        </ScrollPanel>
+        </ScrollPanel> -->
+
+        <!-- Test episode -->
+        <Tabs value="1">
+          <TabList>
+            <Flex gap="20px" :align="(isDesktop || isLaptop) ? 'center' : 'flex-start'" :direction="(isDesktop || isLaptop) ? 'row' : 'column'">
+              <Tab value="0">
+                <Flex gap="16px">
+                  <Flex align="center" justify="center" gap="8px">
+                    <i class="pi pi-bars" style="padding-top: 4px"/>
+                    <h2 :style="{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ffffff' }">Danh sách tập</h2>
+                  </Flex>
+                  <Divider layout="vertical" :style="{ minHeight: 'none!important' }" v-show="!isMobile && !isTablet"/>
+                </Flex>
+              </Tab>
+              <Tab :value="`${index + 1}`" v-for="(item, index) in serverItems">
+                <Flex
+                  :key="index"
+                  align="center"
+                  gap="10px"
+                  @click="setActive(index)"
+                  :style="{
+                    border: activeItem === index ? '1px solid yellow' : 'none',
+                    padding: '8px',
+                    fontSize: '12px',
+                    borderRadius: '6px',
+                    color: activeItem === index ? 'yellow' : '#fff',
+                    opacity: activeItem === index ? '1' : '.8',
+                    cursor: 'pointer'
+                  }"
+                >
+                  <i class="pi pi-server" :style="{ color: activeItem === index ? 'yellow' : '#fff' }" />
+                  {{ item.server_name }}
+                </Flex>
+              </Tab>
+            </Flex>
+          </TabList>
+          <TabPanels>
+            <TabPanel value="0"></TabPanel>
+            <TabPanel :value="`${index + 1}`" v-for="(item, index) in serverItems">
+              <ScrollPanel :style="{ width: '100%', overflow: 'auto', minHeight: '65px', maxHeight: '235px' }">
+                <EpisodeList
+                  :slug="movie?.slug" 
+                  :activeEpisode="activeEpisode"
+                  :esp-data="item.server_data ?? []"
+                  :server="item.server_name"
+                />
+              </ScrollPanel>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
       </Box>
       <Box>
         <Flex direction="column" :style="{ marginBottom: '1.5rem!important' }" gap="24px">

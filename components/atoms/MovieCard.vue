@@ -183,7 +183,7 @@ const toast = useToastMessage();
 
 watch(favoriteList, (list) => {
   if (list && props.data?.id) {
-    isFavorite.value = list.data.favorites.some((item: any) => item.id === props.data.id);
+    isFavorite.value = list.data.favorites.some(item => item.id === props.data.id);
   }
 }, { immediate: true });
 

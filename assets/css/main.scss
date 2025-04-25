@@ -138,6 +138,10 @@ i,
     border-block-start: 1px solid #272932 !important;
 }
 
+.p-divider-vertical {
+    min-height: auto!important;
+}
+
 .p-divider-vertical:before {
     border-inline-start: 1px solid #aaa !important;
 }
@@ -227,4 +231,13 @@ i,
 
 .p-toast {
     z-index: 9999 !important;
+}
+
+.p-tab {
+    padding: 16px 0px!important;
+    border: none!important;
+}
+
+.p-tab-active {
+    border: none!important;
 }
