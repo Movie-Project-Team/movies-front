@@ -20,8 +20,8 @@ export const useEcho = () => {
     cluster: config.PUSHER_APP_CLUSTER, // cấu hình cluster của Pusher, ví dụ: ap1
     forceTLS: config.PUSHER_SCHEME === 'https',
     // Nếu bạn dùng host riêng hoặc cấu hình khác:
-    wsHost: config.PUSHER_HOST || undefined,
-    wsPort: config.PUSHER_PORT ? Number(config.PUSHER_PORT) : undefined,
+    // wsHost: config.PUSHER_HOST || undefined,
+    // wsPort: config.PUSHER_PORT ? Number(config.PUSHER_PORT) : undefined,
     enabledTransports: ['ws', 'wss'],
     authEndpoint: 'https://api.dreamland.io.vn/broadcasting/auth',
     auth: {
