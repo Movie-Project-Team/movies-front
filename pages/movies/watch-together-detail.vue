@@ -5,7 +5,6 @@ import Box from '~/components/atoms/Box.vue';
 import Flex from '~/components/atoms/Flex.vue';
 import EpisodeList from '~/components/molecules/EpisodeList.vue';
 import ChatBox from '~/components/molecules/ChatBox.vue';
-import Camera from '~/components/molecules/Camera.vue';
 
 import { useProfileStore } from '~/stores/profile';
 import useResponsive from '~/composables/resize/use-responsive';
@@ -76,14 +75,45 @@ const { mutate: closeRoom } = useCloseRoom();
 const echo = useEcho();
 
 // State
-const users = ref<Array<{ id: number; name: string; isCameraOn?: boolean }>>([]);
+const users = ref<Array<{ id: number; name: string; isMicOn?: boolean }>>([]);
 const localStream = ref<MediaStream | null>(null);
 const peerConnections = reactive<Record<number, RTCPeerConnection>>({});
 const remoteStreams = reactive<Record<number, MediaStream>>({});
-const myCameraOn = ref(false);
+const myMicOn = ref(false);
 
 // ICE servers
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+// Thêm state để theo dõi hoạt động âm thanh
+const activeSpeakers = reactive<Record<number, boolean>>({});
+watch(activeSpeakers, (newSpeakers) => {
+  console.log('Active Speakers:', newSpeakers);
+});
+
+// Thêm hàm phân tích âm thanh
+function setupAudioAnalyser(stream: MediaStream, userId: number) {
+  const audioContext = new AudioContext();
+  const analyser = audioContext.createAnalyser();
+  const microphone = audioContext.createMediaStreamSource(stream);
+  microphone.connect(analyser);
+  analyser.fftSize = 256;
+  
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+  
+  function checkAudio() {
+    analyser.getByteFrequencyData(dataArray);
+    let sum = 0;
+    for (let i = 0; i < bufferLength; i++) {
+      sum += dataArray[i];
+    }
+    const average = sum / bufferLength;
+    console.log(`User ${userId} - Audio Level:`, average); 
+    activeSpeakers[userId] = average > 10; // Ngưỡng âm thanh
+    requestAnimationFrame(checkAudio);
+  }
+  checkAudio();
+}
 
 // Helpers
 function addTracks(pc: RTCPeerConnection) {
@@ -110,7 +140,10 @@ async function handleSignal({ from, to, sdp, candidate }: any) {
     pc = new RTCPeerConnection(rtcConfig);
     peerConnections[from] = pc;
     addTracks(pc);
-    pc.ontrack = e => remoteStreams[from] = e.streams[0];
+    pc.ontrack = e => {
+      remoteStreams[from] = e.streams[0];
+      setupAudioAnalyser(e.streams[0], from); // Thêm phân tích âm thanh
+    };
     pc.onicecandidate = e => e.candidate && channel.whisper('webrtc.signal', { from: userId.value, to: from, candidate: e.candidate });
   }
   if (sdp) {
@@ -130,16 +163,16 @@ onMounted(() => {
     .here((members: any[]) => users.value = members)
     .joining((member: any) => {
       users.value.push(member);
-      if (myCameraOn.value) createAndSendOffer(member.id);
+      if (myMicOn.value) createAndSendOffer(member.id);
     })
     .leaving((member: any) => {
       users.value = users.value.filter(u => u.id !== member.id);
       peerConnections[member.id]?.close(); delete peerConnections[member.id]; delete remoteStreams[member.id];
     })
     .listenForWhisper('webrtc.signal', handleSignal)
-    .listenForWhisper('camera-state', (data: any) => {
+    .listenForWhisper('mic-state', (data: any) => {
       const u = users.value.find(x => x.id === data.userId);
-      if (u) u.isCameraOn = data.state;
+      if (u) u.isMicOn = data.state;
     });
 });
 
@@ -150,32 +183,43 @@ onBeforeUnmount(() => {
   if (users.value.length <= 1) closeRoom({ roomCode: roomCode.value });
 });
 
-// Camera toggle
-async function toggleCamera() {
-  myCameraOn.value = !myCameraOn.value;
-  channel.whisper('camera-state', { userId: userId.value, state: myCameraOn.value });
-  if (myCameraOn.value) {
-    localStream.value = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    users.value.filter(u => u.id !== userId.value).forEach(u => createAndSendOffer(u.id));
+// Microphone toggle
+async function toggleMic() {
+  myMicOn.value = !myMicOn.value;
+  console.log('Microphone is now', myMicOn.value ? 'ON' : 'OFF');
+  channel.whisper('mic-state', { userId: userId.value, state: myMicOn.value });
+  if (myMicOn.value) {
+    try {
+      localStream.value = await navigator.mediaDevices.getUserMedia({ audio: true });
+      users.value.filter(u => u.id !== userId.value).forEach(u => createAndSendOffer(u.id));
+    } catch (err) {
+      console.error('Error accessing microphone: ', err);
+    }
   } else {
-    localStream.value?.getTracks().forEach(t => t.stop()); localStream.value = null;
-    Object.values(peerConnections).forEach(pc => pc.close()); for (const k in peerConnections) delete peerConnections[+k];
+    localStream.value?.getTracks().forEach(t => t.stop());
+    localStream.value = null;
+    Object.values(peerConnections).forEach(pc => pc.close()); 
+    for (const k in peerConnections) delete peerConnections[+k];
     for (const k in remoteStreams) delete remoteStreams[+k];
   }
 }
 </script>
-
 
 <template>
   <Box :style="{ padding: (!isMobile && !isTablet) ? '150px 70px' : '50px 0' }">
     <h2 v-if="!isMobile && !isTablet">Phòng: {{ movie.title }}</h2>
     <Flex gap="16px" wrap="wrap">
       <Flex v-for="user in users" :key="user.id" direction="column" align="center">
-        <Camera v-if="user.id === userId" :isCameraOn="myCameraOn" />
-        <video v-else-if="remoteStreams[user.id]" :ref="(el: any) => el && (el.srcObject = remoteStreams[user.id])" autoplay playsinline width="200" height="150"/>
-        <div v-else class="avatar-placeholder">{{ user.name }}</div>
-        <Button v-if="user.id === userId" @click="toggleCamera">{{ myCameraOn ? 'Tắt Camera' : 'Bật Camera' }}</Button>
+        <div 
+          class="avatar-placeholder" 
+          :class="{ 'speaking': activeSpeakers[user.id] }"
+          :style="activeSpeakers[user.id] ? { boxShadow: '0 0 10px 5px rgba(0, 255, 0, 0.7)' } : {}"
+        >
+          {{ user.name.charAt(0).toUpperCase() }}
+        </div>
+        <Button v-if="user.id === userId" @click="toggleMic">{{ myMicOn ? 'Tắt Micro' : 'Bật Micro' }}</Button>
         <p>{{ user.name }}</p>
+        <audio v-if="user.id !== userId && remoteStreams[user.id]" :ref="(el: any) => el && (el.srcObject = remoteStreams[user.id])" autoplay></audio>
       </Flex>
     </Flex>
     <Flex gap="8px" :direction="isDesktop ? 'row' : 'column'">
@@ -191,9 +235,28 @@ async function toggleCamera() {
 
 <style scoped>
 .avatar-placeholder {
-  width: 200px; height: 150px;
-  background: #444; color: #fff;
-  display: flex; justify-content: center; align-items: center;
-  font-size: 2rem; border-radius: 4px;
+  width: 100px; 
+  height: 100px;
+  background: #444; 
+  color: #fff;
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+  font-size: 2rem; 
+  border-radius: 50%;
+  transition: box-shadow 0.3s ease;
+}
+
+.avatar-placeholder.speaking {
+  animation: pulse 0.5s infinite alternate;
+}
+
+@keyframes pulse {
+  from {
+    box-shadow: 0 0 5px 2px rgba(0, 255, 0, 0.5);
+  }
+  to {
+    box-shadow: 0 0 15px 7px rgba(0, 255, 0, 0.9);
+  }
 }
 </style>
