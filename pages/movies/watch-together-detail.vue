@@ -111,6 +111,12 @@ function setupAudioAnalyser(stream: MediaStream, userId: number) {
   checkAudio();
 }
 
+declare global {
+  interface RTCPeerConnection {
+    candidateQueue?: RTCIceCandidate[];
+    cleanupTimer?: NodeJS.Timeout;  // More accurate type than ReturnType<typeof setTimeout>
+  }
+}
 // Helpers
 function addTracks(pc: RTCPeerConnection) {
   localStream.value?.getTracks().forEach(track => pc.addTrack(track, localStream.value!));
@@ -131,26 +137,78 @@ async function createAndSendOffer(toId: number) {
 
 async function handleSignal({ from, to, sdp, candidate }: any) {
   if (to !== userId.value) return;
-  let pc = peerConnections[from];
+
+  let pc = peerConnections[from] || new RTCPeerConnection(rtcConfig);
+  
+  // Luôn giữ kết nối dù chưa bật mic
+  if (!peerConnections[from]) {
+    peerConnections[from] = pc;
+    pc.ontrack = e => remoteStreams[from] = e.streams[0];
+  }
+  
+  // Skip if we're getting an answer but we're not expecting one (already stable)
+  if (sdp?.type === 'answer' && pc?.signalingState === 'stable') {
+    console.log('Ignoring answer in stable state');
+    return;
+  }
+
   if (!pc) {
     pc = new RTCPeerConnection(rtcConfig);
     peerConnections[from] = pc;
     addTracks(pc);
+    
     pc.ontrack = e => {
       remoteStreams[from] = e.streams[0];
-      setupAudioAnalyser(e.streams[0], from); // Thêm phân tích âm thanh
+      setupAudioAnalyser(e.streams[0], from);
     };
-    pc.onicecandidate = e => e.candidate && channel.whisper('webrtc.signal', { from: userId.value, to: from, candidate: e.candidate });
+    
+    pc.onicecandidate = e => {
+      if (e.candidate) {
+        channel.whisper('webrtc.signal', { 
+          from: userId.value, 
+          to: from, 
+          candidate: e.candidate 
+        });
+      }
+    };
   }
-  if (sdp) {
-    await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-    if (sdp.type === 'offer') {
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      channel.whisper('webrtc.signal', { from: userId.value, to: from, sdp: pc.localDescription });
+
+  try {
+    if (sdp) {
+      // Check if we already have this description
+      if (pc.remoteDescription && pc.remoteDescription.type === sdp.type) {
+        console.log('Already have this remote description type', sdp.type);
+        return;
+      }
+      
+      await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+      
+      if (sdp.type === 'offer' && pc.signalingState === 'have-remote-offer') {
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        channel.whisper('webrtc.signal', { 
+          from: userId.value, 
+          to: from, 
+          sdp: pc.localDescription 
+        });
+      }
     }
+    
+    if (candidate) {
+      const iceCandidate = new RTCIceCandidate(candidate);
+      try {
+        await pc.addIceCandidate(iceCandidate);
+      } catch (e) {
+        console.warn('Failed to add ICE candidate:', e);
+        if (!pc.candidateQueue) {
+          pc.candidateQueue = [];
+        }
+        pc.candidateQueue.push(iceCandidate);
+      }
+    }
+  } catch (error) {
+    console.error('Error handling signal:', error);
   }
-  if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
 }
 
 let channel: any;
@@ -159,7 +217,14 @@ onMounted(() => {
     .here((members: any[]) => users.value = members)
     .joining((member: any) => {
       users.value.push(member);
-      if (myMicOn.value) createAndSendOffer(member.id);
+      // Tự động tạo offer với mọi thành viên mới, không cần đợi bật mic
+      createAndSendOffer(member.id);
+      
+      // Nếu đã có local stream (đã bật mic), thêm track ngay
+      if (localStream.value) {
+        const pc = peerConnections[member.id];
+        if (pc) addTracks(pc);
+      }
     })
     .leaving((member: any) => {
       users.value = users.value.filter(u => u.id !== member.id);
@@ -175,7 +240,22 @@ onMounted(() => {
 onBeforeUnmount(() => {
   echo.leave(`room.${roomCode.value}`);
   localStream.value?.getTracks().forEach(t => t.stop());
-  Object.values(peerConnections).forEach(pc => pc.close());
+  
+  Object.values(peerConnections).forEach(pc => {
+    // Clear candidate queue and timer if they exist
+    if (pc.candidateQueue) {
+      pc.candidateQueue.length = 0;
+    }
+    if (pc.cleanupTimer) {
+      clearTimeout(pc.cleanupTimer);
+    }
+    pc.close();
+  });
+  
+  // Clear all peer connections and remote streams
+  for (const k in peerConnections) delete peerConnections[+k];
+  for (const k in remoteStreams) delete remoteStreams[+k];
+  
   if (users.value.length <= 1) closeRoom({ roomCode: roomCode.value });
 });
 
