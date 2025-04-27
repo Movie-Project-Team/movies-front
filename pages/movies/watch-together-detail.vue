@@ -86,9 +86,6 @@ const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // Thêm state để theo dõi hoạt động âm thanh
 const activeSpeakers = reactive<Record<number, boolean>>({});
-watch(activeSpeakers, (newSpeakers) => {
-  console.log('Active Speakers:', newSpeakers);
-});
 
 // Thêm hàm phân tích âm thanh
 function setupAudioAnalyser(stream: MediaStream, userId: number) {
@@ -108,7 +105,6 @@ function setupAudioAnalyser(stream: MediaStream, userId: number) {
       sum += dataArray[i];
     }
     const average = sum / bufferLength;
-    console.log(`User ${userId} - Audio Level:`, average); 
     activeSpeakers[userId] = average > 10; // Ngưỡng âm thanh
     requestAnimationFrame(checkAudio);
   }
@@ -186,7 +182,6 @@ onBeforeUnmount(() => {
 // Microphone toggle
 async function toggleMic() {
   myMicOn.value = !myMicOn.value;
-  console.log('Microphone is now', myMicOn.value ? 'ON' : 'OFF');
   channel.whisper('mic-state', { userId: userId.value, state: myMicOn.value });
   if (myMicOn.value) {
     try {
