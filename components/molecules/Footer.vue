@@ -7,7 +7,7 @@ import { ref } from "vue";
 const activeItem = ref<number | null>(null);
 
 const menuItems = [
-  "Hỏi-Đáp",
+  "Hỏi Đáp",
   "Chính sách bảo mật",
   "Điều khoản sử dụng",
   "Giới thiệu",
