@@ -4,12 +4,15 @@ import { z } from 'zod';
 import Box from '~/components/atoms/Box.vue';
 import Flex from '~/components/atoms/Flex.vue';
 import { useRoom } from '~/composables/api/room/use-create-room';
+import SearchMovieModal from './SearchMovieModal.vue';
 
 const props = defineProps<{
   visible: boolean;
   onSuccess?: () => void;
 }>();
 
+const profile = useProfileStore();
+const isOpenSearchMovie = ref(false);
 const localVisible = ref(props.visible);
 const emit = defineEmits(["update:visible"]);
 watch(
@@ -60,11 +63,18 @@ const schema = computed(() =>
 const resolver = computed(() => zodResolver(schema.value));
 const roomMutation = useRoom();
 
+const selectedMovie = ref<Movie | null>(null);
+
+const handleMovieSelect = (movie: Movie) => {
+  selectedMovie.value = movie;
+};
+
 const onSubmit = (data: any, closeCallback: Function) => {
   const mutation = roomMutation;
   const formattedData = {
     ...data,
-    profileId: 2,
+    profileId: profile.user?.id,
+    movieId: selectedMovie.value?.id,
     capacity: data.capacity?.code || null,
   };
   mutation.mutate(formattedData, {
@@ -152,6 +162,43 @@ const onSubmit = (data: any, closeCallback: Function) => {
               </Message>
             </Flex>
             <Flex direction="column" gap="8px">
+              <label :style="{ fontWeight: '700' }">Chọn phim: </label>
+              <Button
+                @click="isOpenSearchMovie = true"
+              >
+                Chọn phim
+              </Button>
+              <Flex
+                v-if="selectedMovie"
+                :key="selectedMovie.id"
+                :style="{ margin: '12px 0' }"
+                gap="12px"
+                class="item-movie"
+              >
+                <NuxtImg
+                  :src="selectedMovie.thumbnail"
+                  alt="Thumbnail"
+                  :style="{ width: '50px', objectFit: 'cover' }"
+                />
+                <Flex direction="column" gap="14px" justify="center" align="flex-start">
+                  <h4 :style="{ fontSize: '12px', margin: '0' }">{{ selectedMovie.title }}</h4>
+                  <Flex :style="{ fontSize: '12px', color: '#aaa' }">
+                    {{ selectedMovie.year }} <Divider layout="vertical" />
+                    {{ selectedMovie.lang }} <Divider layout="vertical" />
+                    {{ String(selectedMovie.esp_total).replace('Tập', '').trim() }} Tập
+                  </Flex>
+                </Flex>
+              </Flex>
+              <Message 
+                v-if="$form.capacity?.invalid"
+                severity="error"
+                size="small"
+                variant="simple"
+              >
+                {{ $form.capacity?.error?.message }}
+              </Message>
+            </Flex>
+            <Flex direction="column" gap="8px">
               <label :style="{ fontWeight: '700' }">Loại phòng: </label>
               <RadioButtonGroup v-model="initialValues.isLocked" name="lock" :style="{ display: 'flex', gap: '24px' }">
                 <Flex gap="8px" align="center">
@@ -201,6 +248,12 @@ const onSubmit = (data: any, closeCallback: Function) => {
         </Flex>
       </template>
     </Dialog>
+    <SearchMovieModal
+      v-if="isOpenSearchMovie"
+      :visible="isOpenSearchMovie"
+      @update:visible="isOpenSearchMovie = $event"
+      @select="handleMovieSelect"
+    />
   </Box>
 </template>
 

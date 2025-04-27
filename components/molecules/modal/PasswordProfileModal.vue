@@ -21,7 +21,6 @@ const initialValues = ref({
     password: ''
 });
 
-const profileStore = useProfileStore();
 const errorMessage = ref<string[]>([]);
 const checkPassword = ref(false);
 const formRef = ref();

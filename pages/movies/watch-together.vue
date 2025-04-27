@@ -9,7 +9,9 @@ import { useGetListRoom } from '~/composables/api/room/use-get-list-room';
 const isOpenModal = ref(false);
 const isOpenMyRoomModal = ref(false);
 
+
 const { data, refetch, isLoading } = useGetListRoom();
+
 </script>
 
 <template>
