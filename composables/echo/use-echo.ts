@@ -2,7 +2,7 @@
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
 
-Pusher.logToConsole = true
+Pusher.logToConsole = false
 
 // Nếu bạn dùng Nuxt, process.env chỉ lấy được các biến đã được expose qua runtimeConfig (hoặc NUXT_PUBLIC_ trực tiếp)
 export const useEcho = () => {
