@@ -5,9 +5,9 @@ import { useLoadingStore } from "~/stores/loading";
 const ENDPOINT = '/room/create';
 
 interface RegisterPayload {
-  host_id: number;
-  movie_id: number | null;
-  is_locked: boolean;
+  profileId: number;
+  movieId: number | null;
+  isLocked: boolean;
   capacity: number;
   password?: string;
 }

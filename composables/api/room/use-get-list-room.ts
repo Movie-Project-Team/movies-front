@@ -13,7 +13,7 @@ const fetchData = async (): Promise<RoomListResponse> => {
 
 export const useGetListRoom = () => {
   const query = useQuery({
-    queryKey: ['room-list'],
+    queryKey: ['room-list-together'],
     queryFn: () => fetchData(),
     placeholderData: keepPreviousData,
   });
