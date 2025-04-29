@@ -5,7 +5,6 @@ export const logout = () => {
     removeCookie('access_token');
     profileStore.isVerify = false;
     profileStore.clearProfile();
-    window.location.reload();
 }
 const extractNumber = (str: string): number => {
     const match = str.match(/\d+/);

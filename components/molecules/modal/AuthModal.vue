@@ -33,7 +33,7 @@ watch(
 const emit = defineEmits(["update:visible", "authSuccess"]);
 
 const initialValues = ref({
-  username: '',
+  name: '',
   email: '',
   password: '',
   rememberLogin: false,
@@ -48,6 +48,10 @@ const schema = computed(() =>
       .refine(() => {
           return !checkPassword.value;
       }, { message: 'Sai thông tin đăng nhập.' }),
+    name: z
+    .string()
+    .trim()
+    .min(1, { message: COMMON_MESSAGES.required }),
     password: z
       .string()
       .trim()
@@ -176,20 +180,20 @@ const onSubmit = (data: any, closeCallback: Function) => {
                 </Message>
               </Flex>
               <Flex direction="column" gap="8px" :style="{ marginBottom: '12px' }" v-if="!isLogin">
-                <label for="username" :style="{ fontWeight: '700' }">Họ và tên: </label>
+                <label for="name" :style="{ fontWeight: '700' }">Họ và tên: </label>
                 <InputText 
-                  v-model="initialValues.username" 
-                  name="username" 
+                  v-model="initialValues.name" 
+                  name="name" 
                   type="text" 
                   placeholder="Nhập Tên" 
                   :style="{ width: '100%', padding: '12px' }"/>
                 <Message 
-                  v-if="$form.username?.invalid"
+                  v-if="$form.name?.invalid"
                   severity="error"
                   size="small"
                   variant="simple"
                 >
-                  {{ $form.email.error?.message }}
+                  {{ $form.name.error?.message }}
                 </Message>
               </Flex>
               <Flex direction="column" gap="8px">

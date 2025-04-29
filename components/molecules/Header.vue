@@ -33,6 +33,13 @@ const handleLoginSuccess = (isSuccess: boolean) => {
   isLoginSuccess.value = isSuccess;
 };
 
+watch(profileStore, () => {
+  if (profileStore.user) {
+    isOpenModal.value = false;
+    isLoginSuccess.value = false;
+  }
+})
+
 const menu = ref();
 const items = ref([
   {
@@ -56,6 +63,9 @@ const items = ref([
   {
     label: "Tài khoản",
     icon: "pi pi-user",
+    command: () => {
+      router.push('/profile')
+    },
   },
   {
     separator: true,
@@ -253,7 +263,7 @@ const { isLaptop, isDesktop } = useResponsive();
         <Flex v-if="profileStore.isVerify && cookieAuth">
           <Avatar
             shape="circle"
-            image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
+            :image="profileStore.user?.avatar"
             @click="toggle"
             aria-haspopup="true"
             aria-controls="overlay_tmenu"

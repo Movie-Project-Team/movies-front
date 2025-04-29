@@ -38,10 +38,10 @@ export const useVerifyPasswordProfile = () => {
       const profile = useProfileStore();
       profile.setVerifyStatus(true);
       profile.setProfile(data?.data);
-
+      localStorage.setItem("profileId", String(data.data.id));
       // loading and reload
       loading.hide();
-      window.location.reload();
+      // window.location.reload();
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
