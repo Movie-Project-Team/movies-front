@@ -23,7 +23,7 @@ export const useEcho = () => {
     // wsHost: config.PUSHER_HOST || undefined,
     // wsPort: config.PUSHER_PORT ? Number(config.PUSHER_PORT) : undefined,
     enabledTransports: ['ws', 'wss'],
-    authEndpoint: 'http://localhost:8000/broadcasting/auth',
+    authEndpoint: 'https://api.dreamland.io.vn/broadcasting/auth',
     auth: {
         headers: {
             Authorization: `Bearer ${getCookie('access_token')}`,
