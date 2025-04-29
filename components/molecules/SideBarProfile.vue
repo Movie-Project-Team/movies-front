@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Flex from '../atoms/Flex.vue';
+import Box from '../atoms/Box.vue';
 
 const router = useRouter();
 const menuItems = ref([
@@ -8,9 +9,9 @@ const menuItems = ref([
     label: 'Quản lý Profile',
     icon: 'pi pi-user',
     children: [
-      { label: 'Đổi mật khẩu', route: '/crawler/list' }, 
-      { label: 'Thêm Profile', route: '/crawler/create' },
-      { label: 'Sửa Profile', route: '/crawler/history' },
+      { label: 'Đổi mật khẩu', route: '/' }, 
+      { label: 'Thêm Profile', route: '/' },
+      { label: 'Sửa Profile', route: '/' },
     ]
   },
   { label: 'Danh sách yêu thích', icon: 'pi pi-heart', route: '/profile/favorite' },
@@ -35,6 +36,9 @@ const navigateTo = (route: any) => {
   activeRoute.value = route;
   activeIndex.value = null;
 };
+
+// profile infomation
+const profile = useProfileStore();
 </script>
 
 <template>
@@ -53,9 +57,9 @@ const navigateTo = (route: any) => {
       align="center"
       gap="12px"
     >
-      <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" class="mr-2" size="large" shape="circle" />
+      <Avatar :image="profile.user?.avatar" class="mr-2" size="large" shape="circle" />
       <Flex direction="column">
-        <h4 :style="{ margin: '4px 0px' }">Nguyễn Trọng Hiếu</h4>
+        <h4 :style="{ margin: '4px 0px' }">{{ profile?.user?.name }}</h4>
         <p :style="{ color: '#6c757d', fontSize: '14px', margin: '0' }">Người lớn</p>
       </Flex>
     </Flex>

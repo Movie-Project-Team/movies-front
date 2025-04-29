@@ -1,337 +1,251 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, watchEffect, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useRoute } from 'vue-router';
 import Box from '~/components/atoms/Box.vue';
 import Flex from '~/components/atoms/Flex.vue';
-import EpisodeList from '~/components/molecules/EpisodeList.vue';
 import ChatBox from '~/components/molecules/ChatBox.vue';
-
-import { useProfileStore } from '~/stores/profile';
-import useResponsive from '~/composables/resize/use-responsive';
 import { useEcho } from '~/composables/echo/use-echo';
-import { useCloseRoom } from '~/composables/api/room/use-close-room';
-import { useGetHistory } from '~/composables/api/movies/use-get-history';
-import { useSaveHistory } from '~/composables/api/movies/use-save-history';
 import { useGetMovie } from '~/composables/api/movies/use-get-movie';
-import { useGetMovieById } from '~/composables/api/movies/use-get-by-id';
-import { useGetListCredit } from '~/composables/api/movies/use-get-list-credit';
+import useResponsive from '~/composables/resize/use-responsive';
 
-// --- Routing & Profile ---
+// Routing & Movie Data
 const route = useRoute();
-const router = useRouter();
-const profileStore = useProfileStore();
-const userId = computed<number>(() => Number(profileStore.user?.id ?? 0));
-
-// --- Active Episode (ensure number type) ---
-const activeEpisode = computed<number>(() => {
-  const ep = route.query.ep;
-  if (Array.isArray(ep)) return Number(ep[0]) || 1;
-  return Number(ep) || 1;
-});
-
-// --- Responsive ---
-const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
-
-// --- Movie Data & History ---
+const { isMobile, isTablet } = useResponsive();
 const slug = computed(() => Array.isArray(route.params.title) ? route.params.title[0] : route.params.title);
-const { data: movieResp, isLoading: loadingMovie } = useGetMovie(slug);
+const { data: movieResp } = useGetMovie(slug);
 const movie = computed(() => movieResp.value?.data ?? {} as any);
-const movieId = computed<number>(() => movie.value.id ?? 0);
 
-const { data: historyResp } = useGetHistory(userId, movieId);
-const { mutate: saveHistory } = useSaveHistory();
-
-// Update history on pause
-function onPause(time: number) {
-  if (!userId.value) return;
-  saveHistory({
-    profileId: userId.value,
-    movieId: movieId.value,
-    timeProcess: time,
-    episode: activeEpisode.value,
-    lastWatchedAt: new Date().toISOString()
-  });
-}
-
-// Seek to saved time
-function restoreTime(player: any) {
-  const saved = historyResp.value?.data?.timeProcess;
-  if (!saved || !player) return;
-  if (player.ready) player.currentTime = saved;
-  else player.once('loadedmetadata', () => player.currentTime = saved);
-}
-
-// --- Credits ---
-const type = computed(() => ['series','hoathinh','tvshows'].includes(movie.value.type) ? 'tv' : (movie.value.type === 'single' ? 'movie' : 'movie'));
-const tmdbId = computed(() => movie.value.imdb || '');
-const { data: tmdbResp } = useGetMovieById(tmdbId, type);
-const resolvedId = computed<any>(() => type.value === 'tv' ? tmdbResp.value?.tv_results?.[0]?.id || tmdbId.value : tmdbId.value);
-const { data: creditsResp } = useGetListCredit(type, resolvedId);
-const castList = computed(() => creditsResp.value?.cast?.slice(0,6) || []);
-
-// --- Room & Signaling ---
+// Room & Presence
 const roomCode = computed<string>(() => (route.query.room as string) || '');
-const { mutate: closeRoom } = useCloseRoom();
+const users = ref<Array<{ id: number; name: string; avatarUrl?: string }>>([]);
 const echo = useEcho();
+const hostId = ref<number>(0);
+const playerRef = ref<any>(null);
+const playerInstance = ref<any>(null);
+  const isHost = computed(() => {
+  return users.value.length > 0 && hostId.value === users.value[0]?.id;
+});
+const isSyncing = ref(false);
 
-// State
-const users = ref<Array<{ id: number; name: string; isMicOn?: boolean }>>([]);
-const localStream = ref<MediaStream | null>(null);
-const peerConnections = reactive<Record<number, RTCPeerConnection>>({});
-const remoteStreams = reactive<Record<number, MediaStream>>({});
-const myMicOn = ref(false);
+const hasInteracted = ref(false);
+const needsInit = ref(false);
+const isClient = typeof window !== 'undefined';
 
-// ICE servers
-const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
-// Thêm state để theo dõi hoạt động âm thanh
-const activeSpeakers = reactive<Record<number, boolean>>({});
-
-// Thêm hàm phân tích âm thanh
-function setupAudioAnalyser(stream: MediaStream, userId: number) {
-  const audioContext = new AudioContext();
-  const analyser = audioContext.createAnalyser();
-  const microphone = audioContext.createMediaStreamSource(stream);
-  microphone.connect(analyser);
-  analyser.fftSize = 256;
-  
-  const bufferLength = analyser.frequencyBinCount;
-  const dataArray = new Uint8Array(bufferLength);
-  
-  function checkAudio() {
-    analyser.getByteFrequencyData(dataArray);
-    let sum = 0;
-    for (let i = 0; i < bufferLength; i++) {
-      sum += dataArray[i];
-    }
-    const average = sum / bufferLength;
-    activeSpeakers[userId] = average > 10; // Ngưỡng âm thanh
-    requestAnimationFrame(checkAudio);
-  }
-  checkAudio();
-}
-
-declare global {
-  interface RTCPeerConnection {
-    candidateQueue?: RTCIceCandidate[];
-    cleanupTimer?: NodeJS.Timeout;  // More accurate type than ReturnType<typeof setTimeout>
-  }
-}
-// Helpers
-function addTracks(pc: RTCPeerConnection) {
-  localStream.value?.getTracks().forEach(track => pc.addTrack(track, localStream.value!));
-}
-
-async function createAndSendOffer(toId: number) {
-  const pc = new RTCPeerConnection(rtcConfig);
-  peerConnections[toId] = pc;
-  addTracks(pc);
-
-  pc.ontrack = e => remoteStreams[toId] = e.streams[0];
-  pc.onicecandidate = e => e.candidate && channel.whisper('webrtc.signal', { from: userId.value, to: toId, candidate: e.candidate });
-
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  channel.whisper('webrtc.signal', { from: userId.value, to: toId, sdp: pc.localDescription });
-}
-
-async function handleSignal({ from, to, sdp, candidate }: any) {
-  if (to !== userId.value) return;
-
-  let pc = peerConnections[from] || new RTCPeerConnection(rtcConfig);
-  
-  // Luôn giữ kết nối dù chưa bật mic
-  if (!peerConnections[from]) {
-    peerConnections[from] = pc;
-    pc.ontrack = e => remoteStreams[from] = e.streams[0];
-  }
-  
-  // Skip if we're getting an answer but we're not expecting one (already stable)
-  if (sdp?.type === 'answer' && pc?.signalingState === 'stable') {
-    console.log('Ignoring answer in stable state');
-    return;
-  }
-
-  if (!pc) {
-    pc = new RTCPeerConnection(rtcConfig);
-    peerConnections[from] = pc;
-    addTracks(pc);
-    
-    pc.ontrack = e => {
-      remoteStreams[from] = e.streams[0];
-      setupAudioAnalyser(e.streams[0], from);
-    };
-    
-    pc.onicecandidate = e => {
-      if (e.candidate) {
-        channel.whisper('webrtc.signal', { 
-          from: userId.value, 
-          to: from, 
-          candidate: e.candidate 
-        });
-      }
-    };
-  }
-
-  try {
-    if (sdp) {
-      // Check if we already have this description
-      if (pc.remoteDescription && pc.remoteDescription.type === sdp.type) {
-        console.log('Already have this remote description type', sdp.type);
-        return;
-      }
-      
-      await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-      
-      if (sdp.type === 'offer' && pc.signalingState === 'have-remote-offer') {
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        channel.whisper('webrtc.signal', { 
-          from: userId.value, 
-          to: from, 
-          sdp: pc.localDescription 
-        });
-      }
-    }
-    
-    if (candidate) {
-      const iceCandidate = new RTCIceCandidate(candidate);
-      try {
-        await pc.addIceCandidate(iceCandidate);
-      } catch (e) {
-        console.warn('Failed to add ICE candidate:', e);
-        if (!pc.candidateQueue) {
-          pc.candidateQueue = [];
-        }
-        pc.candidateQueue.push(iceCandidate);
-      }
-    }
-  } catch (error) {
-    console.error('Error handling signal:', error);
+function handleInteraction() {
+  hasInteracted.value = true;
+  if (needsInit.value) {
+    initClientPlayback();
   }
 }
 
-let channel: any;
 onMounted(() => {
-  channel = echo.join(`room.${roomCode.value}`)
-    .here((members: any[]) => users.value = members)
-    .joining((member: any) => {
-      users.value.push(member);
-      // Tự động tạo offer với mọi thành viên mới, không cần đợi bật mic
-      createAndSendOffer(member.id);
-      
-      // Nếu đã có local stream (đã bật mic), thêm track ngay
-      if (localStream.value) {
-        const pc = peerConnections[member.id];
-        if (pc) addTracks(pc);
+  const channel = echo.join(`room.${roomCode.value}`);
+  channel
+    .here((members: any[]) => {
+      users.value = members.map(m => ({ id: m.id, name: m.name, avatarUrl: m.avatar }));
+      if (!hostId.value && members.length === 1) {
+        hostId.value = members[0].id;
       }
+
+      if (!isHost.value) {
+        needsInit.value = true;
+
+        // Nếu người dùng đã từng tương tác (ví dụ reload), khởi động lại phát video
+        if (isClient && hasInteracted.value) {
+          initClientPlayback();
+        }
+      }
+    })
+    .joining((member: any) => {
+      users.value.push({ id: member.id, name: member.name, avatarUrl: member.avatar });
     })
     .leaving((member: any) => {
       users.value = users.value.filter(u => u.id !== member.id);
-      peerConnections[member.id]?.close(); delete peerConnections[member.id]; delete remoteStreams[member.id];
     })
-    .listenForWhisper('webrtc.signal', handleSignal)
-    .listenForWhisper('mic-state', (data: any) => {
-      const u = users.value.find(x => x.id === data.userId);
-      if (u) u.isMicOn = data.state;
+    .listenForWhisper('video.sync', async ({ time, isPlaying }: any) => {
+      const player = playerInstance.value;
+      if (!player) return;
+
+      isSyncing.value = true;
+
+      try {
+        if (player.media.readyState < HTMLMediaElement.HAVE_METADATA) {
+          await new Promise((resolve) => {
+            player.media.addEventListener('loadedmetadata', resolve, { once: true });
+          });
+        }
+
+        if (Math.abs(player.currentTime - time) > 1) {
+          player.currentTime = time;
+        }
+
+        if (isPlaying && player.paused) {
+          await player.play();
+        } else if (!isPlaying && !player.paused) {
+          player.pause();
+        }
+      } catch (error) {
+        console.error('Lỗi đồng bộ:', error);
+      } finally {
+        setTimeout(() => {
+          isSyncing.value = false;
+        }, 500);
+      }
     });
+
+    // Listen for user interaction (click)
+    if (needsInit.value) {
+      initClientPlayback();
+    }
+
+    if (isClient) {
+      document.body.addEventListener('click', () => {
+        hasInteracted.value = true;
+        if (needsInit.value) {
+          initClientPlayback();
+        }
+      });
+    }
 });
 
 onBeforeUnmount(() => {
   echo.leave(`room.${roomCode.value}`);
-  localStream.value?.getTracks().forEach(t => t.stop());
-  
-  Object.values(peerConnections).forEach(pc => {
-    // Clear candidate queue and timer if they exist
-    if (pc.candidateQueue) {
-      pc.candidateQueue.length = 0;
-    }
-    if (pc.cleanupTimer) {
-      clearTimeout(pc.cleanupTimer);
-    }
-    pc.close();
-  });
-  
-  // Clear all peer connections and remote streams
-  for (const k in peerConnections) delete peerConnections[+k];
-  for (const k in remoteStreams) delete remoteStreams[+k];
-  
-  if (users.value.length <= 1) closeRoom({ roomCode: roomCode.value });
+  if (isClient) {
+    document.body.removeEventListener('click', handleInteraction);
+  }
 });
 
-// Microphone toggle
-async function toggleMic() {
-  myMicOn.value = !myMicOn.value;
-  channel.whisper('mic-state', { userId: userId.value, state: myMicOn.value });
-  if (myMicOn.value) {
-    try {
-      localStream.value = await navigator.mediaDevices.getUserMedia({ audio: true });
-      users.value.filter(u => u.id !== userId.value).forEach(u => createAndSendOffer(u.id));
-    } catch (err) {
-      console.error('Error accessing microphone: ', err);
-    }
-  } else {
-    localStream.value?.getTracks().forEach(t => t.stop());
-    localStream.value = null;
-    Object.values(peerConnections).forEach(pc => pc.close()); 
-    for (const k in peerConnections) delete peerConnections[+k];
-    for (const k in remoteStreams) delete remoteStreams[+k];
-  }
+function syncState({ time, isPlaying }: { time: number; isPlaying: boolean }) {
+  if (!isHost.value || isSyncing.value) return;
+  const channel = echo.join(`room.${roomCode.value}`);
+  channel.whisper('video.sync', { time, isPlaying });
 }
+
+function handlePlayerReady(e: any) {
+  const player = e.detail.plyr;
+  playerInstance.value = player;
+
+  if (!isHost.value && needsInit.value) {
+    player.muted = true;
+  }
+
+  player.on('play', () => {
+    if (!isSyncing.value && isHost.value) {
+      syncState({ time: player.currentTime, isPlaying: true });
+    }
+  });
+
+  player.on('pause', () => {
+    if (!isSyncing.value && isHost.value) {
+      syncState({ time: player.currentTime, isPlaying: false });
+    }
+  });
+
+  player.on('seeked', () => {
+    if (!isSyncing.value && isHost.value) {
+      syncState({ time: player.currentTime, isPlaying: !player.paused });
+    }
+  });
+}
+
+// Tự động khởi tạo video
+function initClientPlayback() {
+  const player = playerInstance.value;
+  if (!player || !hasInteracted.value) return;
+
+  hasInteracted.value = true;
+  needsInit.value = false;
+
+  player.muted = true;
+  player.play().then(() => {
+    player.pause(); // just to unlock playback
+  }).catch((e: any) => {
+    console.warn('Playback unlock failed:', e);
+  });
+}
+
+watch([() => users.value, () => hostId.value], async () => {
+  await nextTick();
+});
 </script>
 
 <template>
-  <Box :style="{ padding: (!isMobile && !isTablet) ? '150px 70px' : '50px 0' }">
+  <Box
+    :style="{ padding: (!isMobile && !isTablet) ? '150px 70px' : '50px 0' }"
+  >
     <h2 v-if="!isMobile && !isTablet">Phòng: {{ movie.title }}</h2>
-    <Flex gap="16px" wrap="wrap">
-      <Flex v-for="user in users" :key="user.id" direction="column" align="center">
-        <div 
-          class="avatar-placeholder" 
-          :class="{ 'speaking': activeSpeakers[user.id] }"
-          :style="activeSpeakers[user.id] ? { boxShadow: '0 0 10px 5px rgba(0, 255, 0, 0.7)' } : {}"
-        >
+
+    <Flex gap="12px" wrap="wrap" :style="{ margin: '24px 0px' }">
+      <Flex v-for="user in users" :key="user.id" direction="column" gap="8px" align="center">
+        <Avatar v-if="user.avatarUrl" :image="user.avatarUrl" size="xlarge" shape="circle" />
+        <div v-else class="avatar-placeholder">
           {{ user.name.charAt(0).toUpperCase() }}
         </div>
-        <Button v-if="user.id === userId" @click="toggleMic">{{ myMicOn ? 'Tắt Micro' : 'Bật Micro' }}</Button>
-        <p>{{ user.name }}</p>
-        <audio v-if="user.id !== userId && remoteStreams[user.id]" :ref="(el: any) => el && (el.srcObject = remoteStreams[user.id])" autoplay></audio>
+        <span class="username">{{ user.name }}</span>
       </Flex>
     </Flex>
-    <Flex gap="8px" :direction="isDesktop ? 'row' : 'column'">
-      <Box :style="{ width: '100%', height: isMobile ? '300px' : '600px' }">
-        <vue-plyr @pause="(e: any) => onPause(e.detail.plyr.currentTime)" @ready="(e: any) => restoreTime(e.detail.plyr)" :poster="movie.poster">
-          <video ref="videoPlayer" :src="movie.videoUrl" playsinline controls width="100%"></video>
-        </vue-plyr>
-      </Box>
-      <ChatBox v-if="roomCode" :room="roomCode"/>
-    </Flex>
+    <div v-if="users.length > 0" :class="{ 'is-host': isHost }">
+      <vue-plyr
+        ref="playerRef"
+        @ready="handlePlayerReady"
+        :poster="movie.poster"
+      >
+        <video
+          :src="`https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-1080p.mp4`"
+          playsinline
+          :muted="!isHost"
+          :data-in-room="!!roomCode"
+          width="100%"
+        ></video>
+      </vue-plyr>
+    </div>
+
+    <ChatBox v-if="roomCode" :room="roomCode" />
   </Box>
 </template>
 
-<style scoped>
+<style>
 .avatar-placeholder {
-  width: 100px; 
-  height: 100px;
-  background: #444; 
-  color: #fff;
-  display: flex; 
-  justify-content: center; 
-  align-items: center;
-  font-size: 2rem; 
+  width: 48px;
+  height: 48px;
+  background-color: #aaa;
   border-radius: 50%;
-  transition: box-shadow 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
 }
 
-.avatar-placeholder.speaking {
-  animation: pulse 0.5s infinite alternate;
+.username {
+  font-weight: 600;
 }
 
-@keyframes pulse {
-  from {
-    box-shadow: 0 0 5px 2px rgba(0, 255, 0, 0.5);
-  }
-  to {
-    box-shadow: 0 0 15px 7px rgba(0, 255, 0, 0.9);
-  }
+.click-to-init {
+  cursor: pointer;
+}
+
+:not(.is-host) .plyr--stopped .plyr__controls {
+  display: none !important;
+  pointer-events: none !important;
+}
+.is-host .plyr--stopped .plyr__controls {
+  display: flex !important;
+  pointer-events: auto !important;
+}
+
+:not(.is-host) .plyr--stopped .plyr__control--overlaid {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.is-host .plyr--stopped .plyr__control--overlaid {
+  display: block !important;
+  pointer-events: auto !important;
+}
+
+.plyr__controls {
+  transition: opacity 0.3s ease;
 }
 </style>

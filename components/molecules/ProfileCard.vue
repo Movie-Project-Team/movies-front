@@ -12,7 +12,7 @@ const isOpenPasswordModal = ref(false);
 <template>
   <Flex direction="column" align="center" gap="8px" :style="{ width: '10rem', overflow: 'hidden', cursor: 'pointer' }" @click="isOpenPasswordModal = true">
     <NuxtImg 
-      src="https://www.goldderby.com/wp-content/uploads/2022/11/Wednesday-Netflix-cast-Jenna-Ortega.jpg?w=620" 
+      :src="profile.avatar" 
       alt=""
       :style="{
         width: '120px',

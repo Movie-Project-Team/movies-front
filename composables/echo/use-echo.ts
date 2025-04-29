@@ -13,7 +13,7 @@ export const useEcho = () => {
 
   // Lấy các biến môi trường từ runtime config
   const config = useRuntimeConfig().public
-
+  const profileId = localStorage.getItem('profileId');
   const echo = new Echo({
     broadcaster: 'pusher',
     key: config.PUSHER_KEY, // dùng NUXT_PUBLIC_PUSHER_KEY
@@ -23,10 +23,11 @@ export const useEcho = () => {
     // wsHost: config.PUSHER_HOST || undefined,
     // wsPort: config.PUSHER_PORT ? Number(config.PUSHER_PORT) : undefined,
     enabledTransports: ['ws', 'wss'],
-    authEndpoint: 'https://api.dreamland.io.vn/broadcasting/auth',
+    authEndpoint: 'http://localhost:8000/broadcasting/auth',
     auth: {
         headers: {
             Authorization: `Bearer ${getCookie('access_token')}`,
+            'X-Profile-Id': profileId || '',
         },
     },
   })

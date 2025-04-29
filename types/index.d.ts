@@ -67,6 +67,7 @@ type Profile = {
   birthday: datetime,
   gender: number,
   phone: number,
+  avatar: string,
   password: string,
   favorites: Movie[]
 }
