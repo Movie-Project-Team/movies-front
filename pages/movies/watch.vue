@@ -238,12 +238,6 @@ useHead(() => ({
 const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 
 // episodes
-const episodes = computed(() => {
-  if (movie.value?.episodes && movie.value.episodes.length > 0) {
-    return movie.value.episodes[0].server_data ?? [];
-  }
-  return [];
-});
 const serverItems = computed(() => {
   if (movie.value?.episodes && movie.value.episodes.length > 0) {
     return movie.value.episodes ?? [];
