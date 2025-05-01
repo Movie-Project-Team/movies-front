@@ -53,6 +53,14 @@ watch(() => props.isLoading, (newValue) => {
 const isOpenPasswordModal = ref(false)
 const router = useRouter();
 
+const toSlug = (text: string): string => {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") 
+    .replace(/\s+/g, "-");
+};
+
 const emit = defineEmits(['confirmOpenRoom'])
 const handleClickRoom = () => {
   if (props.data.is_locked && props.data.status === 0) {
@@ -68,7 +76,9 @@ const handleClickRoom = () => {
   router.push({
     path: `/xem-chung/${props.data.movie.slug}`,
     query: {
-      room: props.data.room_code
+      server: toSlug(String(props.data.movie.episodes[0].server_name)),
+      ep: 1,
+      room: props.data.room_code,
     }
   });
 }

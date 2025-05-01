@@ -11,7 +11,6 @@ const isOpenMyRoomModal = ref(false);
 
 
 const { data, refetch, isLoading } = useGetListRoom();
-
 </script>
 
 <template>
