@@ -65,75 +65,93 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 </script>
 
 <template>
-  <Flex direction="column" justify="center" class="slide-content" :gap="isMobile ? '16px' : '0px'">
-    <!-- <NuxtImg
-      v-if="firstLogoUrl" 
-      :src="`${config.public.imageTmdbDomain}/${firstLogoUrl}`"
-      :alt="`${config.public.imageTmdbDomain}/${firstLogoUrl}`"
-      :style="{
-        maxWidth: '500px',
-        maxHeight: '130px',
-        marginBottom: '40px'
-      }"
-      loading="lazy"
-      fit="cover"
-    /> -->
-    <h2
-      :style="{
-        fontSize: isDesktop ? '52px' : '24px',
-        textAlign: isMobile ? 'center' : 'start',
-        fontWeight: 'bold',
-        textTransform: 'uppercase',
-        letterSpacing: '2px',
-        textShadow: '2px 2px 5px rgba(255, 215, 0, 0.5)',
-        margin: '12px 0px !important',
-      }"
-    >
-      {{ data.title }}
-    </h2>
-    <Flex gap="10px" direction="column"> 
-      <Flex gap="8px" :justify="isMobile ? 'center' : 'flex-start'">
-        <Tag
-          v-for="(tag, index) in tagItems"
-          :key="index"
-          :content="tag.content"
-          :sub-content="tag.subContent"
-          :type="tag.type"
-        />
-      </Flex>
-      <Flex gap="8px" :justify="isMobile ? 'center' : 'flex-start'">
-        <Tag v-for="(genre, index) in genreItems" :key="index" :content="genre.content" :type="'topic'"/>
-      </Flex>
-      <Box 
+  <Flex class="slide-content" :style="{ padding: '100px 50px'}">
+    <Flex direction="column" justify="center" class="slide-item" :gap="isMobile ? '16px' : '0px'" :style="{ width: '600px' }">
+      <!-- <NuxtImg
+        v-if="firstLogoUrl" 
+        :src="`${config.public.imageTmdbDomain}/${firstLogoUrl}`"
+        :alt="`${config.public.imageTmdbDomain}/${firstLogoUrl}`"
         :style="{
-          fontSize: '1rem',
-          lineHeight: 1.6,
-          color: '#fff',
-          textShadow: '0 1px 1px rgba(0, 0, 0, .2)',
-          fontWeight: 400,
-          marginBottom: '2rem',
-          display: '-webkit-box', 
-          WebkitBoxOrient: 'vertical', 
-          WebkitLineClamp: '3', 
-          overflow: 'hidden',
-          maxWidth: '50%'
+          maxWidth: '500px',
+          maxHeight: '130px',
+          marginBottom: '40px'
         }"
-        v-show="isDesktop"
-      >
-        {{ plainDescription }}
-      </Box>
-    </Flex>
-    <Flex :justify="isMobile ? 'center' : 'flex-start'" :style="{ width: '100%' }">
-      <Button 
-        label="Xem ngay"
-        icon="pi pi-play-circle"
-        aria-label="Filter" 
+        loading="lazy"
+        fit="cover"
+      /> -->
+      <h2
         :style="{
-          width: '170px',
-          padding: '15px 31px',
-        }"/>
+          fontSize: isDesktop ? '52px' : '24px',
+          textAlign: isMobile ? 'center' : 'start',
+          fontWeight: 'bold',
+          textTransform: 'uppercase',
+          letterSpacing: '2px',
+          textShadow: '2px 2px 5px rgba(255, 215, 0, 0.5)',
+          margin: '12px 0px !important',
+        }"
+      >
+        {{ data.title }}
+      </h2>
+      <Flex gap="10px" direction="column"> 
+        <Flex gap="8px" :justify="isMobile ? 'center' : 'flex-start'">
+          <Tag
+            v-for="(tag, index) in tagItems"
+            :key="index"
+            :content="tag.content"
+            :sub-content="tag.subContent"
+            :type="tag.type"
+          />
+        </Flex>
+        <Flex gap="8px" :justify="isMobile ? 'center' : 'flex-start'">
+          <Tag v-for="(genre, index) in genreItems" :key="index" :content="genre.content" :type="'topic'"/>
+        </Flex>
+        <Box 
+          :style="{
+            fontSize: '1rem',
+            lineHeight: 1.6,
+            color: '#fff',
+            textShadow: '0 1px 1px rgba(0, 0, 0, .2)',
+            fontWeight: 400,
+            marginBottom: '2rem',
+            display: '-webkit-box', 
+            WebkitBoxOrient: 'vertical', 
+            WebkitLineClamp: '3', 
+            overflow: 'hidden',
+            maxWidth: '50%'
+          }"
+          v-show="isDesktop"
+        >
+          {{ plainDescription }}
+        </Box>
+      </Flex>
+      <Flex :justify="isMobile ? 'center' : 'flex-start'" :style="{ width: '100%' }">
+        <Button 
+          label="Xem ngay"
+          icon="pi pi-play-circle"
+          aria-label="Filter" 
+          :style="{
+            width: '170px',
+            padding: '15px 31px',
+          }"/>
+      </Flex>
     </Flex>
   </Flex>
 </template>
 
-<style scoped></style>
+<style scoped>
+@keyframes fadeInBlue {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+    
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0px);
+  }
+}
+
+.slide-item {
+  animation: fadeInBlue .5s ease-in-out;
+}
+</style>

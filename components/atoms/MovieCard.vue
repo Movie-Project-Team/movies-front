@@ -384,7 +384,7 @@ const toggleFavorite = async () => {
 }
 
 .overlay-title {
-  pointer-events: auto; /* Cho phép nhận sự kiện chuột */
+  pointer-events: auto;
   transition: transform 0.5s ease-in-out;
 }
 
