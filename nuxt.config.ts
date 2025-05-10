@@ -79,7 +79,7 @@ export default defineNuxtConfig({
     }
   },
   image: {
-    domains: ['img.ophim.live'],
+    domains: ['img.ophim.live', 'image.tmdb.org'],
     provider: 'netlify'
   }
 })
