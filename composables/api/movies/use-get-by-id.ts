@@ -23,7 +23,7 @@ export const useGetMovieById = (
   const query = useQuery({
     queryKey: ['movie-tmdb-detail', imdb.value, type.value],
     queryFn: () => fetchData(imdb.value),
-    enabled: isEnabled,
+    enabled: !!imdb.value,
     gcTime: 0,
     retry: true,
   });

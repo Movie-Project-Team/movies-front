@@ -44,6 +44,14 @@ function handleInteraction() {
   }
 }
 
+const plyrOptions = computed(() => ({
+  controls: isHost.value
+    ? ['play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen']
+    : [],
+  clickToPlay: isHost.value,
+  keyboard: { focused: isHost.value, global: isHost.value }
+}));
+
 onMounted(() => {
   const channel = echo.join(`room.${roomCode.value}`);
   channel
@@ -302,8 +310,9 @@ watchEffect(() => {
       </Flex>
     </Flex>
     <Flex>
-      <Box v-if="users.length > 0" :class="{ 'is-host': isHost }" :style="{ width: '100%', marginBottom: '12px' }">
-        <vue-plyr ref="playerRef" @ready="handlePlayerReady" :poster="movie.poster" :style="{ width: '100%', height: '100%', position: 'absolute' }">
+      <Box v-if="users.length > 0" :class="{ 'is-host': isHost }" :style="{ width: '100%', marginBottom: '12px', position: 'relative' }">
+        <div v-if="!isHost" class="interaction-blocker"></div>
+        <vue-plyr ref="playerRef" :options="plyrOptions" @ready="handlePlayerReady" :poster="movie.poster" :style="{ width: '100%', height: '100%', position: 'absolute' }">
           <video :muted="!isHost" :data-in-room="!!roomCode" ref="videoPlayer" src="https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-1080p.mp4" data-poster="https://example.com/poster.jpg" controls playsinline width="100%">
             <p>Your browser does not support HTML5 video.</p>
           </video>
@@ -520,5 +529,14 @@ watchEffect(() => {
 
 .plyr__controls {
   transition: opacity 0.3s ease;
+}
+
+.interaction-blocker {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 9999;
 }
 </style>

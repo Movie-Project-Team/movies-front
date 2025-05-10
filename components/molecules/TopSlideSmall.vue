@@ -23,7 +23,7 @@ watch(
         const j = Math.floor(Math.random() * (i + 1));
         [movies[i], movies[j]] = [movies[j], movies[i]];
       }
-      shuffledSlides.value = movies.slice(0, 10);
+      shuffledSlides.value = movies.slice(0, 12);
       nextTick(() => {
         updateSwipers();
       });
@@ -102,7 +102,7 @@ useSwiper(thumbSwiper, {
           <NuxtImg
             :src="slide.thumbnail"
             :alt="slide.thumbnail"
-            style="height: 120px; object-fit: cover;border-radius: 8px;"
+            style="height: 120px; object-fit: cover;border-radius: 8px;max-width: 90px"
             loading="lazy"
           />
         </swiper-slide>
@@ -131,8 +131,8 @@ main {
 }
 
 .swiper-creative-main {
-  width: 100%;
-  max-width: 1825px;
+  width: 1725px;
+  max-width: 1725px;
   height: 550px;
   border-radius: 32px;
   overflow: hidden;

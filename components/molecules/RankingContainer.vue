@@ -1,17 +1,6 @@
 <script setup lang="ts">
 import Flex from '../atoms/Flex.vue';
 import MovieRankingList from '@/components/molecules/MovieRankingList.vue';
-import SkeletonContainer from './SkeletonContainer.vue';
-
-const props = defineProps<{
-  data: Movie[];
-  isLoading?: boolean
-}>();
-
-const loadingState = ref(props.isLoading);
-watch(() => props.isLoading, (newValue) => {
-  loadingState.value = newValue;
-});
 
 const rankingList = [
   {
@@ -50,8 +39,7 @@ const rankingList = [
         <i :class="item.icon" />
         <span :style="{ fontSize: '13px', fontWeight: '600' }">{{ item.label }}</span>
       </Flex>
-      <SkeletonContainer v-show="loadingState" type="ranking" :number-data="4"/>
-      <MovieRankingList v-show="!loadingState" :type="item.type"/>
+      <MovieRankingList :type="item.type"/>
     </Flex>
   </Flex>
 </template>

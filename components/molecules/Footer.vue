@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import useResponsive from '@/composables/resize/use-responsive';
+import useResponsive from '~/composables/resize/use-responsive';
 import Box from '../atoms/Box.vue';
 import Flex from '../atoms/Flex.vue';
 import { ref } from "vue";
@@ -7,7 +7,7 @@ import { ref } from "vue";
 const activeItem = ref<number | null>(null);
 
 const menuItems = [
-  "Hỏi Đáp",
+  "Hỏi-Đáp",
   "Chính sách bảo mật",
   "Điều khoản sử dụng",
   "Giới thiệu",
@@ -24,7 +24,7 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 <template>
   <Box
     :style="{
-      background: '#0f111a',
+      background: '#161934',
       height: '400px',
     }"
   >
@@ -72,7 +72,7 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
           </span>
         </Flex>
         <Flex gap="20px" :style="{ color: '#aaa', lineHeight: '1.6' }">
-          <span>Rophim.net – Phim hay cả rổ - Trang xem phim online chất lượng cao miễn phí Vietsub, thuyết minh, lồng tiếng full HD. Kho phim mới khổng lồ, phim chiếu rạp, phim bộ, phim lẻ từ nhiều quốc gia như Việt Nam, Hàn Quốc, Trung Quốc, Thái Lan, Nhật Bản, Âu Mỹ… đa dạng thể loại. Khám phá nền tảng phim trực tuyến hay nhất 2024 chất lượng 4K!</span>
+          <span>Dreamland – Website phục vụ học tập, làm đồ án - Đây là một website được xây dựng với mục đích học tập và thực hiện đồ án cá nhân. Mọi nội dung phim ảnh trên trang chỉ dùng để minh họa, học hỏi và nghiên cứu kỹ thuật phát triển web. Trang không có giá trị thương mại, không phục vụ mục đích kinh doanh, và không lưu trữ hay phân phối nội dung bản quyền.</span>
         </Flex>
       </Flex>
     </Flex> 

@@ -42,23 +42,30 @@ const plainDescription = computed(() => {
     .trim();
 });
 
-// const config = useRuntimeConfig();
-// const typeRef = computed(() => props.data?.type || 'movie'); 
-// const tmdbIdRef = computed(() => props.data?.tmdb_id ? String(props.data.tmdb_id) : '');
-// const { data: tvTMDB } = useGetMovieById(tmdbIdRef, typeRef);
+const config = useRuntimeConfig();
+const currentRef = computed(() => props.data?.esp_current || 'movie'); 
+const typeRef = computed(() => props.data?.esp_current == "Full" ? "movie" : "tv");
+const tmdbIdRef = computed(() => props.data?.imdb ? String(props.data.imdb) : '');
+const { data: tvTMDB } = useGetMovieById(tmdbIdRef, currentRef);
 
-// const resolvedTmdb = computed(() => {
-//   if (typeRef.value === "tv" && tvTMDB.value?.tv_results?.[0]?.id) {
-//     return String(tvTMDB.value.tv_results[0].id);
-//   }
-//   return tvTMDB.value?.movie_results.id ?? "113268";
-// });
+const resolvedTmdb = computed(() => {
+  if (!tvTMDB.value) return null;
+  
+  if (currentRef.value === "Full") {
+    return tvTMDB.value.movie_results?.[0]?.id 
+      ? String(tvTMDB.value.movie_results[0].id) 
+      : null;
+  }
+  
+  return tvTMDB.value.tv_results?.[0]?.id 
+    ? String(tvTMDB.value.tv_results[0].id) 
+    : null;
+});
+const { data: image } = useGetImage(typeRef as Ref<string>, resolvedTmdb as Ref<string>);
 
-// const { data: image } = useGetImage(typeRef as Ref<string>, resolvedTmdb as Ref<string>);
-
-// const firstLogoUrl = computed(() => {
-//   return image.value?.logos?.length ? image.value.logos[0].file_path : null;
-// });
+const firstLogoUrl = computed(() => {
+  return image.value?.logos?.length ? image.value.logos[0].file_path : null;
+});
 
 // responsive
 const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
@@ -67,19 +74,20 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 <template>
   <Flex class="slide-content" :style="{ padding: '100px 50px'}">
     <Flex direction="column" justify="center" class="slide-item" :gap="isMobile ? '16px' : '0px'" :style="{ width: '600px' }">
-      <!-- <NuxtImg
+      <NuxtImg
         v-if="firstLogoUrl" 
         :src="`${config.public.imageTmdbDomain}/${firstLogoUrl}`"
         :alt="`${config.public.imageTmdbDomain}/${firstLogoUrl}`"
         :style="{
           maxWidth: '500px',
-          maxHeight: '130px',
+          maxHeight: '170px',
           marginBottom: '40px'
         }"
         loading="lazy"
         fit="cover"
-      /> -->
+      />
       <h2
+        v-else
         :style="{
           fontSize: isDesktop ? '52px' : '24px',
           textAlign: isMobile ? 'center' : 'start',
@@ -117,7 +125,6 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
             WebkitBoxOrient: 'vertical', 
             WebkitLineClamp: '3', 
             overflow: 'hidden',
-            maxWidth: '50%'
           }"
           v-show="isDesktop"
         >

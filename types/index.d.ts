@@ -238,7 +238,7 @@ type tvTMDB = {
 
 type tvTMDBResponse = {
   tv_results: tvTMDB[],
-  movie_results: tvTMDB
+  movie_results: tvTMDB[]
 }
 
 type RoomResponse = {

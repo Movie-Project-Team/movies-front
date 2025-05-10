@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useSwiper } from '#imports'
-import { ref, computed, defineAsyncComponent, onMounted } from 'vue'
+import { ref, computed, reactive, watch, watchEffect, nextTick, onMounted } from 'vue'
 import { EffectFade } from 'swiper/modules'
 import Box from '~/components/atoms/Box.vue'
 import SectionContainer from '~/components/atoms/SectionContainer.vue'
@@ -12,19 +12,16 @@ import Flex from '~/components/atoms/Flex.vue'
 import GokuLoading from '~/components/molecules/GokuLoading.vue'
 import useResponsive from '~/composables/resize/use-responsive'
 import { useIntersectionObserver } from '@vueuse/core'
+import { useGetListMovieSections } from '../composables/api/movies/use-get-list-movie-sections'
+import MovieCardV2 from '~/components/atoms/MovieCardV2.vue'
+import RankingContainer from '~/components/molecules/RankingContainer.vue'
 
 // Responsive
 const { isDesktop, isMobile } = useResponsive()
 
 // Fetch movie data
 const params = ref({ item: 10, keyword: '', year: '2025' })
-const { data, isLoading: isLoadingMovie } = useGetListMovie(params)
-
-// Global loading
-const loading = useLoadingStore()
-watchEffect(() => {
-  isLoadingMovie.value ? loading.show() : loading.hide()
-})
+// const { data, isLoading: isLoadingMovie } = useGetListMovie(params)
 
 // Swiper setup
 const swiperCreativeRef = ref(null)
@@ -40,69 +37,84 @@ useSwiper(swiperCreativeRef, {
 })
 
 // Provide movies list
-provide('movies', data?.value?.data)
+// provide('movies', data?.value?.data)
 
 // Fetch history
 const profileStore = useProfileStore()
 const profileId = computed(() => profileStore.user?.id ?? 1)
 const { data: historyList } = useGetListHistory(profileId)
 
-// Shuffle slides
-const shuffledSlides = computed(() => {
-  const movies = [...(data?.value?.data ?? [])]
-  for (let i = movies.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[movies[i], movies[j]] = [movies[j], movies[i]]
-  }
-  return movies.slice(0, 5)
+// Intersection Observer Implementation
+const visibleSections = reactive<Record<string, boolean>>({});
+const sectionRefs = reactive<Record<string, HTMLElement | null>>({});
+const { movieSections, results, isLoading: isLoadingMovie } = useGetListMovieSections();
+
+// Global loading
+const loading = useLoadingStore()
+watchEffect(() => {
+  isLoadingMovie.value ? loading.show() : loading.hide()
 })
 
-// Dynamic imports
-const LazyMovieList = defineAsyncComponent(() => import('~/components/molecules/MovieList.vue'))
-const LazyRankingContainer = defineAsyncComponent(() => import('~/components/molecules/RankingContainer.vue'))
-const LazyTopSlideSmall = defineAsyncComponent(() => import('~/components/molecules/TopSlideSmall.vue'))
+const visibleCount = ref(0);
+const isSectionLoading = ref(false);
+const loadedSections = reactive<Record<string, boolean>>({});
 
-// Intersection flags and refs
-const showRankingSection = ref(false)
-const rankingSectionRef = ref<HTMLElement | null>(null)
-const showNewSection = ref(false)
-const newSectionRef = ref<HTMLElement | null>(null)
-const showHotSection = ref(false)
-const hotSectionRef = ref<HTMLElement | null>(null)
+// Sửa lại hàm handleVisibleSection
+const handleVisibleSection = (key: string) => {
+  if (!loadedSections[key]) {
+    // Kiểm tra nếu đã hiển thị đủ 3 section thì dừng
+    if (visibleCount.value % 3 === 0 && visibleCount.value > 0) {
+      isSectionLoading.value = true;
+      
+      // Delay 1 giây trước khi load tiếp
+      setTimeout(() => {
+        isSectionLoading.value = false;
+        loadedSections[key] = true;
+        visibleCount.value++;
+      }, 3000);
+    } else {
+      loadedSections[key] = true;
+      visibleCount.value++;
+    }
+  }
+};
 
-// Observe when sections enter viewport
-onMounted(() => {
-  if (rankingSectionRef.value) {
+// Initialize sections and setup observers
+const initializeSections = () => {
+  movieSections.forEach((section: any) => {
+    visibleSections[section.key] = false;
+  });
+};
+
+const setupObservers = () => {
+  movieSections.forEach((section: any, index: any) => {
+    const element = sectionRefs[section.key];
+    if (!element) return;
+
     useIntersectionObserver(
-      rankingSectionRef,
+      element,
       ([{ isIntersecting }]) => {
-        if (isIntersecting) showRankingSection.value = true
-      },
-      { threshold: 0.2 }
-    )
-  }
-  if (newSectionRef.value) {
-    useIntersectionObserver(
-      newSectionRef,
-      ([{ isIntersecting }]) => {
-        if (isIntersecting) showNewSection.value = true
-      },
-      { threshold: 0.2 }
-    )
-  }
-  if (hotSectionRef.value) {
-    useIntersectionObserver(
-      hotSectionRef,
-      ([{ isIntersecting }]) => {
-        if (isIntersecting) 
-        {
-          showHotSection.value = true
+        if (isIntersecting && !visibleSections[section.key] && !isSectionLoading.value) {
+          visibleSections[section.key] = true;
+          handleVisibleSection(section.key);
         }
       },
-      { threshold: 0.2 }
-    )
-  }
-})
+      { threshold: 0.1 }
+    );
+  });
+};
+
+onMounted(async () => {
+  initializeSections();
+  await nextTick();
+  setupObservers();
+});
+
+watch(movieSections, async () => {
+  initializeSections();
+  await nextTick();
+  setupObservers();
+}, { immediate: true });
 </script>
 
 <template>
@@ -117,10 +129,10 @@ onMounted(() => {
             :style="{ height: isMobile ? '600px' : '820px', maxHeight: isMobile ? '600px' : '100vh' }"
             :loop="true"
             :init="false"
-            v-show="shuffledSlides.length > 0"
+            v-show="(results['new']?.data?.value?.data ?? []).length > 0"
           >
             <swiper-slide
-              v-for="slide in shuffledSlides"
+              v-for="slide in results['new']?.data?.value?.data ?? []"
               :key="`main-slide-${slide.id}`"
               class="swiper-slide"
             >
@@ -135,7 +147,7 @@ onMounted(() => {
             </swiper-slide>
           </swiper-container>
           <Flex
-            v-show="shuffledSlides.length === 0"
+            v-show="(results['new']?.data?.value?.data ?? []).length === 0"
             direction="column"
             align="center"
             justify="center"
@@ -162,7 +174,6 @@ onMounted(() => {
 
     <!-- Main Content -->
     <Box :style="{ padding: isDesktop ? '0 50px' : '0 20px', marginBottom: '60px' }">
-
       <!-- Xem tiếp -->
       <SectionContainer
         v-if="profileStore.user && historyList?.data?.length"
@@ -171,39 +182,33 @@ onMounted(() => {
         <WatchContinuteList :data="historyList.data" :is-loading="isLoadingMovie" />
       </SectionContainer>
 
-      <!-- Bảng xếp hạng (lazy) -->
-      <div ref="rankingSectionRef" style="min-height:1px">
-        <SectionContainer
-          v-if="showRankingSection && isDesktop"
-          title="Bảng xếp hạng"
-        >
-          <LazyRankingContainer
-            :data="data?.data ?? []"
-            :is-loading="isLoadingMovie"
-          />
-        </SectionContainer>
+      <!-- Xếp hạng -->
+      <SectionContainer :title="'Bảng xếp hạng'" v-show="isDesktop">
+        <RankingContainer :is-loading="isLoadingMovie"/>
+      </SectionContainer>
+      <!-- Dynamic Sections -->
+      <div   
+        v-for="(section, index) in movieSections"
+        :key="section.key"
+        :ref="el => sectionRefs[section.key] = el as HTMLElement"
+      >
+        <span style="visibility: hidden; height: 0; overflow: hidden;">{{ JSON.stringify(visibleSections) }}</span>
+        <Flex justify="center" align="center" gap="20px" v-if="index > 0 && index % 3 === 0 && isSectionLoading && visibleSections[section.key]">
+          <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="8" fill="transparent" animationDuration=".5s" aria-label="Custom ProgressSpinner" />
+        </Flex>
+        <Transition name="fade">
+          <SectionContainer
+            v-if="loadedSections[section.key]"
+            :title="section.title"
+          >
+            <component 
+              :is="section.component"
+              :data="results[section.key]?.data?.value?.data ?? []"
+              :is-loading="results[section.key]?.isLoading"
+            />
+          </SectionContainer>
+        </Transition>
       </div>
-
-      <!-- Phim mới (lazy) -->
-      <div ref="newSectionRef" style="min-height:1px">
-        <SectionContainer v-if="showNewSection" title="Phim mới">
-          <LazyMovieList
-            :data="data?.data ?? []"
-            :is-loading="isLoadingMovie"
-          />
-        </SectionContainer>
-      </div>
-
-      <!-- Phim hot (lazy) -->
-      <div ref="hotSectionRef" style="min-height:1px">
-        <SectionContainer
-          v-if="showHotSection && isDesktop"
-          title="Phim hot"
-        >
-          <LazyTopSlideSmall :data="data?.data ?? []" />
-        </SectionContainer>
-      </div>
-
     </Box>
   </Box>
 </template>
@@ -277,5 +282,15 @@ swiper-slide {
 
 .img-slide {
   animation: fadeInBlue .5s ease-in-out;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
