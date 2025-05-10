@@ -20,7 +20,7 @@ const skeletonLoading = computed(() => isLoading.value);
     <Flex>
       <SideBarProfile :style="{ minWidth: '270px' }"/>
       <Flex :style="{ padding: '0px 20px' }" direction="column" gap="20px">
-        <h1 :style="{ margin: '0px' }">Danh sách yêu thích</h1>
+        <h1 :style="{ margin: '0px' }">Danh sách phim yêu thích</h1>
         <MovieListV2 :data="data?.data.favorites" :is-loading="skeletonLoading"/>
       </Flex>
     </Flex>
