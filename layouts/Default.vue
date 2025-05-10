@@ -59,8 +59,9 @@ useIntersectionObserver(
 .header--fixed {
   position: fixed;
   transform: translateY(0)!important;
+  border: 1px solid #272932!important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)!important;
-  background: #0f111a!important;
+  background: #00031c!important;
 }
 
 .header--absolute {

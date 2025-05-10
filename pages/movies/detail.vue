@@ -204,63 +204,20 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
           width: (!isMobile && !isTablet) ? '60%' : '100%',
         }"
       >
-        <Box 
-          :style="{
-            position: 'absolute',
-            width: '28%',
-            height: '550px',
-            left: '-35px',
-            bottom: '45px',
-            background: 'linear-gradient(270deg, rgba(25, 27, 36, 0) 0%, rgba(25, 27, 36, 0.2) 12%, rgba(25, 27, 36, 0.5) 25%, rgba(25, 27, 36, 0.7) 40%, rgba(25, 27, 36, 0.85) 55%, rgba(25, 27, 36, 0.95) 70%, rgb(25, 27, 36) 85%)'
-          }"
-          v-show="(!isMobile && !isTablet)"
-        />
-        <Box 
-          :style="{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            left: '4px',
-            bottom: '40px',
-            background: 'linear-gradient(179deg, rgba(25, 27, 36, 0) 1%, rgba(25, 27, 36, 0.2) 10%, rgba(25, 27, 36, 0.5) 40%, rgba(25, 27, 36, 0.7) 50%, rgba(25, 27, 36, 0.85) 65%, rgba(25, 27, 36, 0.95) 80%, rgb(25, 27, 36) 100%)'
-          }"
-          v-show="(!isMobile && !isTablet)"
-        />
-        <!-- Box góc trên bên phải -->
-        <Box
-          :style="{
-            position: 'absolute',
-            width: '16%',
-            height: '100%',
-            right: '0',
-            top: '0',
-            background: 'linear-gradient(90deg, rgba(25, 27, 36, 0) 0%, rgba(25, 27, 36, 0.4) 20%, rgba(25, 27, 36, 0.7) 50%, rgba(25, 27, 36, 0.9) 80%, rgb(25, 27, 36) 100%)'
-          }"
-          v-show="(!isMobile && !isTablet)"
-        />
-        <!-- Box phía trên -->
-        <Box
-          :style="{
-            position: 'absolute',
-            width: '100%',
-            height: '100px',
-            top: '0',
-            background: 'linear-gradient(180deg, rgb(25, 27, 36) 0%, rgba(25, 27, 36, 0.6) 60%, rgba(25, 27, 36, 0) 100%)'
-          }"
-          v-show="(!isMobile && !isTablet)"
-        />
         <Box
           :style="{
             width: '100%',
           }"
+          class="image-wrapper"
         >
           <NuxtImg 
             fit="cover" 
             :src="posterSrc" 
             alt="" 
+            class="poster-image"
             :style="{ 
               width: '100%',
-              height: '90%',
+              height: '100%',
               maxHeight: (!isMobile && !isTablet) ? '480px' : '165px',
               objectFit: 'cover',
               maskImage: (isMobile || isTablet) ? 'linear-gradient(360deg, transparent 0, #000 50%, #000 50%, transparent)' : 'none',
@@ -268,6 +225,10 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
               opacity: (isMobile || isTablet) ? '.1' : '1'
             }"
           />
+          <Box class="overlay1"></Box>
+          <Box class="overlay2"></Box>
+          <Box class="overlay3"></Box>
+          <Box class="overlay4"></Box>
         </Box>
       </Flex>
     </Flex>
@@ -294,5 +255,60 @@ const { isMobile, isTablet, isLaptop, isDesktop } = useResponsive();
 
 .fade-in {
   animation: fadeInBlue .5s ease-in-out;
+}
+
+.image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 480px; /* hoặc chiều cao bạn muốn */
+  background-color: #00031c;
+  overflow: hidden;
+}
+
+.poster-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.3; /* hoặc 0.1 tùy bạn muốn nền ảnh mờ cỡ nào */
+}
+
+.overlay1 {
+  position: absolute;
+  height: 200px;
+  top: -20%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, transparent, #00031c, #00031c);
+}
+
+.overlay2 {
+  position: absolute;
+  height: 200px;
+  top: 70%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, transparent, #00031c, #00031c);
+}
+
+.overlay3 {
+  position: absolute;
+  height: 100%;
+  top: 0;
+  left: -95%;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to left, transparent, #00031c, #00031c);
+}
+
+.overlay4 {
+  position: absolute;
+  height: 100%;
+  top: 0;
+  left: 95%;
+  right:0;
+  bottom: 0;
+  background: linear-gradient(to right, transparent, #00031c, #00031c);
 }
 </style>
