@@ -36,7 +36,6 @@ useSwiper(swiperCreativeRef, {
   },
 })
 
-// Provide movies list
 // provide('movies', data?.value?.data)
 
 // Fetch history
